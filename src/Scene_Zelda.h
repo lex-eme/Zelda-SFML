@@ -1,0 +1,51 @@
+#pragma once
+
+#include "Scene.h"
+
+class Scene_Zelda : public Scene {
+    struct PlayerConfig {
+        float X, Y, CX, CY, SPEED, HEALTH;
+    };
+
+    std::string m_levelPath;
+    PlayerConfig m_playerConfig{};
+    bool m_drawTextures = true;
+    bool m_drawCollision = true;
+    bool m_drawGrid = false;
+    bool m_drawDebug = false;
+    bool m_follow = false;
+    const Vec2 m_gridSize = {64.0f, 64.0f};
+    sf::Text m_gridText;
+
+public:
+    Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath);
+
+private:
+    void init(const std::string& levelPath);
+    void loadLevel(const std::string& filename);
+    void onEnd() override;
+    void update() override;
+    void spawnPlayer();
+    void spawnSword(std::shared_ptr<Entity> entity);
+    Vec2 getPosition(int rx, int ry, int tx, int ty) const;
+    std::shared_ptr<Entity> player();
+
+    // Systems
+    void sMovement();
+    void sAI();
+    void sStatus();
+    void sAnimation();
+    void sCollision();
+    void sCamera();
+    void sGUI();
+    void sRender() override;
+    void sDoAction(const Action& action) override;
+
+    // Helper
+    void moveEntities(const std::string& tag);
+    void tileCollision();
+    void playerEnemyCollision();
+    void heartCollision();
+    void resolveHeartCollision(std::shared_ptr<Entity> heart, std::shared_ptr<Entity> entity);
+    void swordEnemyCollision();
+};
