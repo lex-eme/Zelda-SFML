@@ -1,9 +1,9 @@
 #include "Animation.h"
 
-#include "Scene_Menu.h"
+sf::Texture Animation::s_defaultTexture;
 
 Animation::Animation()
-    : m_sprite(g_defaultTexture) {
+    : m_sprite(s_defaultTexture) {
 }
 
 Animation::Animation(const std::string& name, const sf::Texture& t, const size_t frameCount, const size_t speed)
@@ -49,8 +49,6 @@ bool Animation::hasEnded() const {
     if (m_frameCount == 1) {
         return false;
     }
-
-    size_t frame = m_currentFrame / m_speed;
-
+    const size_t frame = m_currentFrame / m_speed;
     return frame > m_frameCount;
 }

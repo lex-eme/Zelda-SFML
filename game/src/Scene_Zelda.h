@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "Scene.h"
 
 class Scene_Zelda : public Scene {

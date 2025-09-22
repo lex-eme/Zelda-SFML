@@ -26,12 +26,7 @@ void Scene_Menu::init() {
     registerAction(sf::Keyboard::Key::Q, "QUIT");
     registerAction(sf::Keyboard::Key::Escape, "QUIT");
 
-    m_menuStrings.push_back("Level  1");
-    m_menuStrings.push_back("Level  2");
-    m_menuStrings.push_back("Level  3");
-
-    m_levelPaths.push_back("../../assets/levels/level1.txt");
-    m_levelPaths.push_back("assets/levels/level1.txt");
+    m_menuStrings.emplace_back("Level  1");
     m_levelPaths.push_back("assets/levels/level1.txt");
 
     m_menuText.setFont(m_game->assets().getFont("Megaman"));

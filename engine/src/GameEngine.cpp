@@ -1,7 +1,6 @@
 #include "GameEngine.h"
 
 #include <iostream>
-#include "Scene_Menu.h"
 #include "imgui-SFML.h"
 
 GameEngine::GameEngine(const std::string& path) {
@@ -65,41 +64,6 @@ void GameEngine::init(const std::string& path) {
     m_window.setVerticalSyncEnabled(true);
 
     ImGui::SFML::Init(m_window);
-
-    if (sf::Joystick::isConnected(0)) {
-        std::cout << "Joystick is connected" << std::endl;
-        sf::Joystick::Identification identification = sf::Joystick::getIdentification(0);
-        std::cout << "Name: " << identification.name.toAnsiString() << ", product id: " << identification.productId <<
-                ", vendor id: " << identification.vendorId << std::endl;
-
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::X)) {
-            std::cout << "Joystick 0 has X axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::Y)) {
-            std::cout << "Joystick 0 has Y axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::Z)) {
-            std::cout << "Joystick 0 has Z axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::R)) {
-            std::cout << "Joystick 0 has R axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::U)) {
-            std::cout << "Joystick 0 has U axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::V)) {
-            std::cout << "Joystick 0 has V axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::PovX)) {
-            std::cout << "Joystick 0 has PovX axis" << std::endl;
-        }
-        if (sf::Joystick::hasAxis(0, sf::Joystick::Axis::PovY)) {
-            std::cout << "Joystick 0 has PovY axis" << std::endl;
-        }
-    }
-
-
-    changeScene("MENU", std::make_shared<Scene_Menu>(this));
 }
 
 void GameEngine::update() {
@@ -161,7 +125,7 @@ void GameEngine::sUserInput() {
             std::cout << "joystick id: " << joystickButtonPressed->joystickId << std::endl;
             std::cout << "button: " << joystickButtonPressed->button << std::endl;
         } else if (const auto* joystickMoved = event->getIf<sf::Event::JoystickMoved>()) {
-            std::cout << joystickMoved->axis <<" axis moved!" << std::endl;
+            std::cout << joystickMoved->axis << " axis moved!" << std::endl;
             std::cout << "joystick id: " << joystickMoved->joystickId << std::endl;
             std::cout << "new position: " << joystickMoved->position << std::endl;
         } else if (const auto* joystickConnected = event->getIf<sf::Event::JoystickConnected>()) {

@@ -5,8 +5,6 @@
 
 #include "Scene.h"
 
-inline sf::Texture g_defaultTexture;
-
 class Scene_Menu : public Scene {
     std::vector<std::string> m_menuStrings;
     std::vector<std::string> m_levelPaths;

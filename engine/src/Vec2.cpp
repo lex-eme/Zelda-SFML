@@ -1,6 +1,6 @@
 #include "Vec2.h"
 
-#include <math.h>
+#include <cmath>
 
 constexpr auto PI = 3.14159265f;
 

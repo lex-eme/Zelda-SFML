@@ -471,16 +471,17 @@ static void entitiesTable(const EntityVec& entityVec) {
         ImGui::TableSetupColumn("Position");
         ImGui::TableHeadersRow();
 
-        for (auto e: entityVec) {
+        for (const auto e: entityVec) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("%i", e->id());
+            ImGui::Text("%zu", e->id());
             ImGui::TableNextColumn();
-            ImGui::Text(e->tag().c_str());
+            ImGui::Text("%s", e->tag().c_str());
             ImGui::TableNextColumn();
-            ImGui::Text(e->get<CAnimation>().animation.getName().c_str());
+            ImGui::Text("%s", e->get<CAnimation>().animation.getName().c_str());
             ImGui::TableNextColumn();
-            ImGui::Text("(%i,%i)", (int) e->get<CTransform>().pos.x, (int) e->get<CTransform>().pos.y);
+            ImGui::Text("(%i,%i)", static_cast<int>(e->get<CTransform>().pos.x),
+                        static_cast<int>(e->get<CTransform>().pos.y));
         }
 
         ImGui::EndTable();

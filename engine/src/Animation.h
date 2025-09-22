@@ -6,6 +6,8 @@
 #include "Vec2.h"
 
 class Animation {
+    static sf::Texture s_defaultTexture;
+
     sf::Sprite m_sprite;
     size_t m_frameCount = 1; // total number of frames of animation
     size_t m_currentFrame = 0; // the currentframe of animation being played
