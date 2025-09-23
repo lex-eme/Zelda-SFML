@@ -23,10 +23,10 @@ struct Vec2 {
     Vec2& operator*=(float val);
     Vec2& operator/=(float val);
 
-    float dist(const Vec2& rhs) const;
-    float distSq(const Vec2& rhs) const;
-    float mag() const;
-    float cross(const Vec2& rhs) const;
+    [[nodiscard]] float dist(const Vec2& rhs) const;
+    [[nodiscard]] float distSq(const Vec2& rhs) const;
+    [[nodiscard]] float mag() const;
+    [[nodiscard]] float cross(const Vec2& rhs) const;
     Vec2& normalize();
     Vec2& setMag(float len);
     Vec2& rotate(float theta);

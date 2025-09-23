@@ -7,7 +7,7 @@
 
 class EntityManager;
 
-typedef std::tuple<
+using ComponentTuple = std::tuple<
     CTransform,
     CLifeSpan,
     CDamage,
@@ -19,7 +19,7 @@ typedef std::tuple<
     CHealth,
     CPatrol,
     CFollowPlayer
-> ComponentTuple;
+>;
 
 class Entity {
     friend class EntityManager;
@@ -33,7 +33,7 @@ class Entity {
 
 public:
     void destroy();
-    const size_t id() const;
+    size_t id() const;
     bool isActive() const;
     const std::string& tag() const;
 

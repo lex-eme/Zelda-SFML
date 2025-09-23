@@ -18,8 +18,9 @@ protected:
     size_t m_currentFrame = 0;
 
 public:
-    Scene();
-    Scene(GameEngine* gameEngine);
+    Scene() = default;
+    explicit Scene(GameEngine* gameEngine);
+    virtual ~Scene() = default;
 
     virtual void update() = 0;
     virtual void sDoAction(const Action& action) = 0;
@@ -28,13 +29,13 @@ public:
     void simulate(size_t frames);
     void registerAction(sf::Keyboard::Key inputKey, const std::string& actionName);
 
-    size_t width() const;
-    size_t height() const;
-    size_t currentFrame() const;
+    [[nodiscard]] size_t width() const;
+    [[nodiscard]] size_t height() const;
+    [[nodiscard]] size_t currentFrame() const;
 
-    bool hasEnded() const;
+    [[nodiscard]] bool hasEnded() const;
 
-    const ActionMap& getActionMap() const;
+    [[nodiscard]] const ActionMap& getActionMap() const;
     void drawLine(const Vec2& p1, const Vec2& p2) const;
 
 private:

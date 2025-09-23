@@ -3,7 +3,7 @@
 #include "Entity.h"
 
 struct Intersect {
-    bool result;
+    bool result = false;
     Vec2 pos;
 };
 

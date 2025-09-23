@@ -19,7 +19,7 @@ struct CTransform : Component {
 
     CTransform() = default;
 
-    CTransform(const Vec2& p)
+    explicit CTransform(const Vec2& p)
         : pos(p), prevPos(p) {
     }
 
@@ -36,10 +36,9 @@ struct CLifeSpan : Component {
     int lifespan = 0;
     int frameCreated = 0;
 
-    CLifeSpan() {
-    }
+    CLifeSpan() = default;
 
-    CLifeSpan(int duration, int frame)
+    CLifeSpan(const int duration, const int frame)
         : lifespan(duration), frameCreated(frame) {
     }
 };
@@ -47,10 +46,9 @@ struct CLifeSpan : Component {
 struct CDamage : Component {
     int damage = 1;
 
-    CDamage() {
-    }
+    CDamage() = default;
 
-    CDamage(int d)
+    explicit CDamage(const int d)
         : damage(d) {
     }
 };
@@ -62,8 +60,7 @@ struct CInput : Component {
     bool right = false;
     bool attack = false;
 
-    CInput() {
-    }
+    CInput() = default;
 };
 
 struct CBoundingBox : Component {
@@ -72,14 +69,13 @@ struct CBoundingBox : Component {
     bool blockMove = false;
     bool blockVision = false;
 
-    CBoundingBox() {
-    }
+    CBoundingBox() = default;
 
-    CBoundingBox(const Vec2& s)
+    explicit CBoundingBox(const Vec2& s)
         : size(s), halfSize(s.x / 2, s.y / 2) {
     }
 
-    CBoundingBox(const Vec2& s, bool bm, bool bv)
+    CBoundingBox(const Vec2& s, const bool bm, const bool bv)
         : size(s), halfSize(s.x / 2, s.y / 2), blockMove(bm), blockVision(bv) {
     }
 };
@@ -88,10 +84,9 @@ struct CAnimation : Component {
     Animation animation;
     bool repeat = false;
 
-    CAnimation() {
-    }
+    CAnimation() = default;
 
-    CAnimation(const Animation& anim, bool r)
+    CAnimation(const Animation& anim, const bool r)
         : animation(anim), repeat(r) {
     }
 };
@@ -100,10 +95,9 @@ struct CState : Component {
     std::string state = "stand";
     bool changed = false;
 
-    CState() {
-    }
+    CState() = default;
 
-    CState(const std::string& s)
+    explicit CState(const std::string& s)
         : state(s) {
     }
 };
@@ -111,10 +105,9 @@ struct CState : Component {
 struct CInvincibility : Component {
     int iframes = 0;
 
-    CInvincibility() {
-    }
+    CInvincibility() = default;
 
-    CInvincibility(int f)
+    explicit CInvincibility(const int f)
         : iframes(f) {
     }
 };
@@ -123,10 +116,9 @@ struct CHealth : Component {
     int max = 1;
     int current = 1;
 
-    CHealth() {
-    }
+    CHealth() = default;
 
-    CHealth(int m)
+    explicit CHealth(const int m)
         : max(m), current(m) {
     }
 };
@@ -136,10 +128,9 @@ struct CPatrol : Component {
     size_t currentPosition = 0;
     float speed = 0.0f;
 
-    CPatrol() {
-    }
+    CPatrol() = default;
 
-    CPatrol(std::vector<Vec2>& pos, float s)
+    CPatrol(const std::vector<Vec2>& pos, const float s)
         : positions(pos), speed(s) {
     }
 };
@@ -148,10 +139,9 @@ struct CFollowPlayer : Component {
     Vec2 home;
     float speed = 0.0f;
 
-    CFollowPlayer() {
-    }
+    CFollowPlayer() = default;
 
-    CFollowPlayer(Vec2 p, float s)
+    CFollowPlayer(const Vec2 p, const float s)
         : home(p), speed(s) {
     }
 };

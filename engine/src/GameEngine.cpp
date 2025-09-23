@@ -99,8 +99,8 @@ void GameEngine::sUserInput() {
 
         if (event->is<sf::Event::Closed>()) {
             quit();
-        } else if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
-            if (key->code == sf::Keyboard::Key::X) {
+        } else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+            if (keyPressed->code == sf::Keyboard::Key::X) {
                 std::cout << "trying to save screenshot to " << "test.png" << std::endl;
                 sf::Texture texture(m_window.getSize());
                 texture.update(m_window);
@@ -109,17 +109,17 @@ void GameEngine::sUserInput() {
                 }
             }
 
-            if (currentScene()->getActionMap().find(key->code) == currentScene()->getActionMap().end()) {
+            if (currentScene()->getActionMap().find(keyPressed->code) == currentScene()->getActionMap().end()) {
                 continue;
             }
 
-            currentScene()->sDoAction(Action(currentScene()->getActionMap().at(key->code), "START"));
-        } else if (const auto* key = event->getIf<sf::Event::KeyReleased>()) {
-            if (currentScene()->getActionMap().find(key->code) == currentScene()->getActionMap().end()) {
+            currentScene()->sDoAction(Action(currentScene()->getActionMap().at(keyPressed->code), "START"));
+        } else if (const auto* keyReleased = event->getIf<sf::Event::KeyReleased>()) {
+            if (currentScene()->getActionMap().find(keyReleased->code) == currentScene()->getActionMap().end()) {
                 continue;
             }
 
-            currentScene()->sDoAction(Action(currentScene()->getActionMap().at(key->code), "END"));
+            currentScene()->sDoAction(Action(currentScene()->getActionMap().at(keyReleased->code), "END"));
         } else if (const auto* joystickButtonPressed = event->getIf<sf::Event::JoystickButtonPressed>()) {
             std::cout << "joystick button pressed!" << std::endl;
             std::cout << "joystick id: " << joystickButtonPressed->joystickId << std::endl;

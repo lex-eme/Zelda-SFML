@@ -18,7 +18,7 @@ class GameEngine {
     sf::Clock m_deltaClock;
 
 public:
-    GameEngine(const std::string& path);
+    explicit GameEngine(const std::string& path);
 
     void changeScene(const std::string& sceneName, const std::shared_ptr<Scene>& scene, bool endCurrentScene = false);
 

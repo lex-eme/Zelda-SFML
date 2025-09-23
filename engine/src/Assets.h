@@ -21,12 +21,12 @@ public:
     void addSound(const std::string& name, const std::string& path);
     void addFont(const std::string& name, const std::string& path);
 
-    const std::unordered_map<std::string, sf::Texture>& getTextures() const;
-    const std::unordered_map<std::string, Animation>& getAnimations() const;
-    const std::unordered_map<std::string, sf::Sound>& getSounds() const;
+    [[nodiscard]] const std::unordered_map<std::string, sf::Texture>& getTextures() const;
+    [[nodiscard]] const std::unordered_map<std::string, Animation>& getAnimations() const;
+    [[nodiscard]] const std::unordered_map<std::string, sf::Sound>& getSounds() const;
 
-    const sf::Texture& getTexture(const std::string& name) const;
-    const Animation& getAnimation(const std::string& name) const;
+    [[nodiscard]] const sf::Texture& getTexture(const std::string& name) const;
+    [[nodiscard]] const Animation& getAnimation(const std::string& name) const;
     sf::Sound& getSound(const std::string& name);
-    const sf::Font& getFont(const std::string& name) const;
+    [[nodiscard]] const sf::Font& getFont(const std::string& name) const;
 };

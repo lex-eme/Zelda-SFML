@@ -15,7 +15,7 @@ class EntityManager {
     size_t m_totalEntities = 0;
 
 public:
-    EntityManager();
+    EntityManager() = default;
 
     void update();
 

@@ -14,7 +14,7 @@ const std::string& Entity::tag() const {
     return m_tag;
 }
 
-const size_t Entity::id() const {
+size_t Entity::id() const {
     return m_ID;
 }
 
