@@ -12,13 +12,13 @@ class Scene_Menu : public Scene {
     size_t m_menuIndex = 0;
 
 public:
-    Scene_Menu(GameEngine* gameEngine = nullptr);
+    explicit Scene_Menu(GameEngine* gameEngine = nullptr);
 
     void sRender() override;
 
 private:
     void init();
-    void update() override;
+    void update(float deltaTime) override;
     void onEnd() override;
 
     // Systems

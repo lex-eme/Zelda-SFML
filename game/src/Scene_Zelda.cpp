@@ -12,7 +12,7 @@ Scene_Zelda::Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath)
     init(levelPath);
 }
 
-void Scene_Zelda::update() {
+void Scene_Zelda::update(float deltaTime) {
     m_entityManager.update();
 
     if (!m_paused) {
@@ -106,10 +106,10 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
     spawnPlayer();
 }
 
-Vec2 Scene_Zelda::getPosition(int rx, int ry, int tx, int ty) const {
-    float x = rx * (float) width() + tx * m_gridSize.x + m_gridSize.x / 2;
-    float y = ry * (float) height() + ty * m_gridSize.y + m_gridSize.y / 2;
-    return Vec2(x, y);
+Vec2 Scene_Zelda::getPosition(const int rx, const int ry, const int tx, const int ty) const {
+    const float x = rx * static_cast<float>(width()) + tx * m_gridSize.x + m_gridSize.x / 2;
+    const float y = ry * static_cast<float>(height()) + ty * m_gridSize.y + m_gridSize.y / 2;
+    return {x, y};
 }
 
 void Scene_Zelda::spawnPlayer() {
@@ -163,7 +163,7 @@ void Scene_Zelda::sAnimation() {
     for (auto entity: m_entityManager.getEntities()) {
         if (entity->has<CAnimation>()) {
             auto& anim = entity->get<CAnimation>();
-            anim.animation.update();
+            anim.animation.update(GameEngine::s_deltaTime);
 
             if (!anim.repeat && anim.animation.hasEnded()) {
                 entity->destroy();
@@ -179,13 +179,13 @@ void Scene_Zelda::sCamera() {
     if (m_follow) {
         view.setCenter({pos.x, pos.y});
     } else {
-        int w = (int) width();
-        int h = (int) height();
+        const int w = static_cast<int>(width());
+        const int h = static_cast<int>(height());
 
-        int rx = (int) pos.x / w;
+        int rx = static_cast<int>(pos.x) / w;
         if (pos.x < 0.0f) rx -= 1;
 
-        int ry = (int) pos.y / h;
+        int ry = static_cast<int>(pos.y) / h;
         if (pos.y < 0.0f) ry -= 1;
 
         view.setCenter({rx * w + w / 2.0f, ry * h + h / 2.0f});
@@ -198,16 +198,16 @@ void Scene_Zelda::moveEntities(const std::string& tag) {
     for (auto e: m_entityManager.getEntities(tag)) {
         auto& transform = e->get<CTransform>();
         transform.prevPos = transform.pos;
-        transform.pos += transform.velocity;
+        transform.pos += transform.velocity * GameEngine::s_deltaTime;
     }
 }
 
 void Scene_Zelda::sMovement() {
-    auto& input = player()->get<CInput>();
+    const auto& input = player()->get<CInput>();
     auto& transform = player()->get<CTransform>();
     auto& state = player()->get<CState>();
 
-    float speed = m_playerConfig.SPEED;
+    const float speed = m_playerConfig.SPEED;
     Vec2 facing = transform.facing;
     bool run = true;
     if (input.up) {
@@ -251,7 +251,7 @@ void Scene_Zelda::sMovement() {
     moveEntities("Player");
     moveEntities("NPC");
 
-    for (auto sword: m_entityManager.getEntities("Sword")) {
+    for (const auto sword: m_entityManager.getEntities("Sword")) {
         std::string animName;
         placeSword(animName, sword->get<CTransform>(), player()->get<CTransform>());
         sword->add<CAnimation>(m_game->assets().getAnimation(animName), true);
@@ -263,8 +263,8 @@ void Scene_Zelda::spawnSword(std::shared_ptr<Entity> entity) {
     if (input.attack)
         return;
 
-    auto sword = m_entityManager.addEntity("Sword");
-    auto& eTransform = entity->get<CTransform>();
+    const auto sword = m_entityManager.addEntity("Sword");
+    const auto& eTransform = entity->get<CTransform>();
     sword->add<CTransform>();
     std::string animName;
     placeSword(animName, sword->get<CTransform>(), eTransform);
@@ -272,7 +272,7 @@ void Scene_Zelda::spawnSword(std::shared_ptr<Entity> entity) {
     sword->add<CAnimation>(anim, true);
     sword->add<CBoundingBox>(anim.getSize());
     sword->add<CDamage>(1);
-    sword->add<CLifeSpan>(10, m_currentFrame);
+    sword->add<CLifeSpan>(0.1f);
     input.attack = true;
     m_game->playSound("Slash");
 }
@@ -294,8 +294,9 @@ std::shared_ptr<Entity> Scene_Zelda::player() {
 void Scene_Zelda::sStatus() {
     for (auto sword: m_entityManager.getEntities("Sword")) {
         auto& lifespan = sword->get<CLifeSpan>();
+        lifespan.lifespan -= GameEngine::s_deltaTime;
 
-        if ((int) m_currentFrame - lifespan.frameCreated > lifespan.lifespan) {
+        if (lifespan.lifespan < 0.0f) {
             sword->destroy();
             player()->get<CInput>().attack = false;
         }
@@ -303,23 +304,23 @@ void Scene_Zelda::sStatus() {
 
     if (player()->has<CInvincibility>()) {
         auto& invincibility = player()->get<CInvincibility>();
-        invincibility.iframes -= 1;
+        invincibility.duration -= GameEngine::s_deltaTime;
 
-        if (invincibility.iframes < 0) {
+        if (invincibility.duration < 0.0f) {
             player()->remove<CInvincibility>();
         }
     }
 }
 
 void Scene_Zelda::sAI() {
-    for (auto enemy: m_entityManager.getEntities("NPC")) {
+    for (const auto enemy: m_entityManager.getEntities("NPC")) {
         if (enemy->has<CFollowPlayer>()) {
             auto& follow = enemy->get<CFollowPlayer>();
             auto& transform = enemy->get<CTransform>();
             auto& pPos = player()->get<CTransform>().pos;
             bool visionBlocked = false;
 
-            for (auto obstacle: m_entityManager.getEntities()) {
+            for (const auto obstacle: m_entityManager.getEntities()) {
                 if (!obstacle->has<CBoundingBox>()) continue;
                 if (!obstacle->get<CBoundingBox>().blockVision) continue;
 
@@ -355,11 +356,11 @@ void Scene_Zelda::sAI() {
 }
 
 static void resolveTileCollision(std::shared_ptr<Entity> tile, std::shared_ptr<Entity> entity) {
-    Vec2 overlap = Physics::GetOverlap(tile, entity);
-    Vec2 prevOverlap = Physics::GetPreviousOverlap(tile, entity);
+    const Vec2 overlap = Physics::GetOverlap(tile, entity);
+    const Vec2 prevOverlap = Physics::GetPreviousOverlap(tile, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
-        auto& tilePos = tile->get<CTransform>().pos;
+        const auto& tilePos = tile->get<CTransform>().pos;
         auto& entityPos = entity->get<CTransform>().pos;
         auto& entityPrevPos = entity->get<CTransform>().prevPos;
 
@@ -374,10 +375,10 @@ static void resolveTileCollision(std::shared_ptr<Entity> tile, std::shared_ptr<E
 }
 
 void Scene_Zelda::tileCollision() {
-    for (auto tile: m_entityManager.getEntities("Tile")) {
+    for (const auto tile: m_entityManager.getEntities("Tile")) {
         resolveTileCollision(tile, player());
 
-        for (auto npc: m_entityManager.getEntities("NPC")) {
+        for (const auto npc: m_entityManager.getEntities("NPC")) {
             resolveTileCollision(tile, npc);
         }
     }
@@ -389,11 +390,11 @@ void Scene_Zelda::playerEnemyCollision() {
     if (p->has<CInvincibility>())
         return;
 
-    for (auto enemy: m_entityManager.getEntities("NPC")) {
-        Vec2 overlap = Physics::GetOverlap(enemy, p);
+    for (const auto enemy: m_entityManager.getEntities("NPC")) {
+        const Vec2 overlap = Physics::GetOverlap(enemy, p);
         if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
             p->get<CHealth>().current -= enemy->get<CDamage>().damage;
-            p->add<CInvincibility>(30);
+            p->add<CInvincibility>(1.0f);
 
             if (p->get<CHealth>().current <= 0) {
                 p->destroy();
@@ -407,8 +408,8 @@ void Scene_Zelda::playerEnemyCollision() {
 }
 
 void Scene_Zelda::resolveHeartCollision(std::shared_ptr<Entity> heart, std::shared_ptr<Entity> entity) {
-    Vec2 overlap = Physics::GetOverlap(heart, entity);
-    Vec2 prevOverlap = Physics::GetPreviousOverlap(heart, entity);
+    const Vec2 overlap = Physics::GetOverlap(heart, entity);
+    const Vec2 prevOverlap = Physics::GetPreviousOverlap(heart, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
         entity->get<CHealth>().current = entity->get<CHealth>().max;
@@ -418,7 +419,7 @@ void Scene_Zelda::resolveHeartCollision(std::shared_ptr<Entity> heart, std::shar
 }
 
 void Scene_Zelda::heartCollision() {
-    for (auto tile: m_entityManager.getEntities("Tile")) {
+    for (const auto tile: m_entityManager.getEntities("Tile")) {
         if (tile->get<CAnimation>().animation.getName() != "Heart")
             continue;
 
@@ -431,12 +432,12 @@ void Scene_Zelda::heartCollision() {
 }
 
 void Scene_Zelda::swordEnemyCollision() {
-    for (auto sword: m_entityManager.getEntities("Sword")) {
+    for (const auto sword: m_entityManager.getEntities("Sword")) {
         if (!sword->has<CDamage>())
             continue;
 
-        for (auto enemy: m_entityManager.getEntities("NPC")) {
-            Vec2 overlap = Physics::GetOverlap(sword, enemy);
+        for (const auto enemy: m_entityManager.getEntities("NPC")) {
+            const Vec2 overlap = Physics::GetOverlap(sword, enemy);
 
             if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
                 enemy->get<CHealth>().current -= sword->get<CDamage>().damage;
@@ -543,7 +544,7 @@ void Scene_Zelda::sRender() {
     tick.setFillColor(sf::Color::Black);
 
     if (m_drawTextures) {
-        for (auto e: m_entityManager.getEntities()) {
+        for (const auto e: m_entityManager.getEntities()) {
             auto& transform = e->get<CTransform>();
             sf::Color c = sf::Color::White;
             if (e->has<CInvincibility>()) {
@@ -561,10 +562,10 @@ void Scene_Zelda::sRender() {
         }
 
         // draw health bars
-        for (auto e: m_entityManager.getEntities()) {
-            auto& transform = e->get<CTransform>();
+        for (const auto e: m_entityManager.getEntities()) {
+            const auto& transform = e->get<CTransform>();
             if (e->has<CHealth>()) {
-                auto& h = e->get<CHealth>();
+                const auto& h = e->get<CHealth>();
                 Vec2 size(64, 6);
                 sf::RectangleShape rect({size.x, size.y});
                 rect.setPosition({transform.pos.x - 32, transform.pos.y - 48});
@@ -573,7 +574,7 @@ void Scene_Zelda::sRender() {
                 rect.setOutlineThickness(2.0f);
                 m_game->window().draw(rect);
 
-                float ratio = (float) (h.current) / h.max;
+                const float ratio = (float) (h.current) / h.max;
                 size.x *= ratio;
                 rect.setSize({size.x, size.y});
                 rect.setFillColor(sf::Color(255, 0, 0));
@@ -589,12 +590,12 @@ void Scene_Zelda::sRender() {
     }
 
     if (m_drawGrid) {
-        float leftX = m_game->window().getView().getCenter().x - width() / 2;
-        float rightX = leftX + width() + m_gridSize.x;
-        float topY = m_game->window().getView().getCenter().y - height() / 2;
-        float bottomY = topY + height() + m_gridSize.y;
-        float nextGridX = leftX - ((int) leftX % (int) m_gridSize.x);
-        float nextGridY = topY - ((int) topY % (int) m_gridSize.y);
+        const float leftX = m_game->window().getView().getCenter().x - width() / 2;
+        const float rightX = leftX + width() + m_gridSize.x;
+        const float topY = m_game->window().getView().getCenter().y - height() / 2;
+        const float bottomY = topY + height() + m_gridSize.y;
+        const float nextGridX = leftX - static_cast<int>(leftX) % static_cast<int>(m_gridSize.x);
+        const float nextGridY = topY - static_cast<int>(topY) % static_cast<int>(m_gridSize.y);
 
         for (float x = nextGridX; x < rightX; x += m_gridSize.x) {
             drawLine(Vec2(x, topY), Vec2(x, bottomY));
@@ -604,8 +605,8 @@ void Scene_Zelda::sRender() {
             drawLine(Vec2(leftX, y), Vec2(rightX, y));
 
             for (float x = nextGridX; x < rightX; x += m_gridSize.x) {
-                std::string xCell = std::to_string((int) x / (int) m_gridSize.x);
-                std::string yCell = std::to_string((int) y / (int) m_gridSize.y);
+                std::string xCell = std::to_string(static_cast<int>(x) / static_cast<int>(m_gridSize.x));
+                std::string yCell = std::to_string(static_cast<int>(y) / static_cast<int>(m_gridSize.y));
                 m_gridText.setString("(" + xCell + "," + yCell + ")");
                 m_gridText.setPosition({x + 3.0f, y + 2.0f});
                 m_game->window().draw(m_gridText);
@@ -613,12 +614,12 @@ void Scene_Zelda::sRender() {
         }
     }
 
-    if (m_drawCollision) {
+    if (m_drawDebug) {
         sf::CircleShape dot(4.0f);
         dot.setFillColor(sf::Color::Black);
         for (auto e: m_entityManager.getEntities()) {
             if (e->has<CBoundingBox>()) {
-                auto& box = e->get<CBoundingBox>();
+                const auto& box = e->get<CBoundingBox>();
                 auto& transform = e->get<CTransform>();
                 sf::RectangleShape rect;
                 rect.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
@@ -636,8 +637,8 @@ void Scene_Zelda::sRender() {
 
             if (e->has<CPatrol>()) {
                 auto& patrol = e->get<CPatrol>().positions;
-                for (size_t p = 0; p < patrol.size(); p++) {
-                    dot.setPosition({patrol[p].x, patrol[p].y});
+                for (auto& p: patrol) {
+                    dot.setPosition({p.x, p.y});
                     m_game->window().draw(dot);
                 }
             }

@@ -22,7 +22,7 @@ public:
     explicit Scene(GameEngine* gameEngine);
     virtual ~Scene() = default;
 
-    virtual void update() = 0;
+    virtual void update(float deltaTime) = 0;
     virtual void sDoAction(const Action& action) = 0;
     virtual void sRender() = 0;
 
