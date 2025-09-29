@@ -4,7 +4,7 @@ static Vec2 overlap(const Vec2& p1, const Vec2& p2, const Vec2& s1, const Vec2& 
     const float overlapX = s2.x + s1.x - abs(p2.x - p1.x);
     const float overlapY = s2.y + s1.y - abs(p2.y - p1.y);
 
-    return Vec2(overlapX, overlapY);
+    return {overlapX, overlapY};
 }
 
 Vec2 Physics::GetOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2) {

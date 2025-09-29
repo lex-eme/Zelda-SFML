@@ -37,7 +37,7 @@ struct CLifeSpan : Component {
 
     CLifeSpan() = default;
 
-    CLifeSpan(const float duration)
+    explicit CLifeSpan(const float duration)
         : lifespan(duration) {
     }
 };
