@@ -33,13 +33,12 @@ struct CTransform : Component {
 };
 
 struct CLifeSpan : Component {
-    int lifespan = 0;
-    int frameCreated = 0;
+    float lifespan = 0.0f;
 
     CLifeSpan() = default;
 
-    CLifeSpan(const int duration, const int frame)
-        : lifespan(duration), frameCreated(frame) {
+    explicit CLifeSpan(const float duration)
+        : lifespan(duration) {
     }
 };
 
@@ -103,12 +102,12 @@ struct CState : Component {
 };
 
 struct CInvincibility : Component {
-    int iframes = 0;
+    float duration = 0.0f;
 
     CInvincibility() = default;
 
-    explicit CInvincibility(const int f)
-        : iframes(f) {
+    explicit CInvincibility(const float d)
+        : duration(d) {
     }
 };
 

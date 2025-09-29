@@ -5,8 +5,8 @@
 
 #include "Entity.h"
 
-typedef std::vector<std::shared_ptr<Entity> > EntityVec;
-typedef std::map<std::string, EntityVec> EntityMap;
+using EntityVec = std::vector<std::shared_ptr<Entity>>;
+using EntityMap = std::map<std::string, EntityVec>;
 
 class EntityManager {
     EntityVec m_entities;

@@ -13,11 +13,12 @@ class GameEngine {
     Assets m_assets;
     std::string m_currentScene;
     SceneMap m_sceneMap;
-    size_t m_simulationSpeed = 1;
     bool m_running = true;
     sf::Clock m_deltaClock;
 
 public:
+    static float s_deltaTime;
+
     explicit GameEngine(const std::string& path);
 
     void changeScene(const std::string& sceneName, const std::shared_ptr<Scene>& scene, bool endCurrentScene = false);

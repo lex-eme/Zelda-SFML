@@ -27,12 +27,12 @@ void Scene_Menu::init() {
     registerAction(sf::Keyboard::Key::Escape, "QUIT");
 
     m_menuStrings.emplace_back("Level  1");
-    m_levelPaths.push_back("assets/levels/level1.txt");
+    m_levelPaths.emplace_back("assets/levels/level1.txt");
 
     m_menuText.setFont(m_game->assets().getFont("Megaman"));
 }
 
-void Scene_Menu::update() {
+void Scene_Menu::update(float deltaTime) {
     m_entityManager.update();
     m_game->window().setView(m_game->window().getDefaultView());
 }

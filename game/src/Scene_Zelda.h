@@ -12,7 +12,7 @@ class Scene_Zelda : public Scene {
     std::string m_levelPath;
     PlayerConfig m_playerConfig{};
     bool m_drawTextures = true;
-    bool m_drawCollision = true;
+    bool m_drawCollision = false;
     bool m_drawGrid = false;
     bool m_drawDebug = false;
     bool m_follow = false;
@@ -26,7 +26,7 @@ private:
     void init(const std::string& levelPath);
     void loadLevel(const std::string& filename);
     void onEnd() override;
-    void update() override;
+    void update(float deltaTime) override;
     void spawnPlayer();
     void spawnSword(std::shared_ptr<Entity> entity);
     Vec2 getPosition(int rx, int ry, int tx, int ty) const;

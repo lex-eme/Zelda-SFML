@@ -3,6 +3,8 @@
 #include <iostream>
 #include "imgui-SFML.h"
 
+float GameEngine::s_deltaTime = 0.0f;
+
 GameEngine::GameEngine(const std::string& path) {
     init(path);
 }
@@ -61,18 +63,23 @@ void GameEngine::init(const std::string& path) {
     m_assets.loadFromFile(path);
 
     m_window.create(sf::VideoMode({1280, 768}), "Not Zelda");
-    m_window.setVerticalSyncEnabled(true);
 
-    ImGui::SFML::Init(m_window);
+    if (!ImGui::SFML::Init(m_window)) {
+        std::cerr << "Could not init ImGui-SFML." << std::endl;
+        exit(1);
+    }
 }
 
 void GameEngine::update() {
     if (!isRunning() || m_sceneMap.empty())
         return;
 
-    ImGui::SFML::Update(m_window, m_deltaClock.restart());
+    const sf::Time deltaTime = m_deltaClock.restart();
+    s_deltaTime = deltaTime.asSeconds();
+    ImGui::SFML::Update(m_window, deltaTime);
+
     sUserInput();
-    currentScene()->simulate(m_simulationSpeed);
+    currentScene()->simulate(1);
     currentScene()->sRender();
     ImGui::SFML::Render(m_window);
     m_window.display();
