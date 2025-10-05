@@ -34,8 +34,9 @@ Intersect Physics::LineIntersect(const Vec2& a, const Vec2& b, const Vec2& c, co
     Vec2 cma = c - a;
     float t = cma.cross(s) / rxs;
     float u = cma.cross(r) / rxs;
-    if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
+    if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f) {
         return {true, Vec2(a.x + t * r.x, a.y + t * r.y)};
+    }
 
     return {false, Vec2()};
 }

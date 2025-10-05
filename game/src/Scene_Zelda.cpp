@@ -6,6 +6,7 @@
 #include "imgui-SFML.h"
 
 #include <fstream>
+#include <imgui_internal.h>
 
 Scene_Zelda::Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath)
     : Scene(gameEngine), m_levelPath(levelPath), m_gridText(gameEngine->assets().getFont("Megaman")) {
@@ -491,7 +492,10 @@ static void entitiesTable(const EntityVec& entityVec) {
 
 void Scene_Zelda::sGUI() {
     ImGui::Begin("Scene Properties");
-    ImGui::SetWindowFontScale(1.5f);
+    ImGui::GetCurrentContext();
+    const ImGuiContext& g = *ImGui::GetCurrentContext();
+    const ImGuiIO& io = g.IO;
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
     if (ImGui::BeginTabBar("MyTabBar")) {
         if (ImGui::BeginTabItem("Debug")) {
