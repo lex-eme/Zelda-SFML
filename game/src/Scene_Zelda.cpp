@@ -64,7 +64,9 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
 
             auto& anim = m_game->assets().getAnimation(name);
             e.add<CAnimation>(anim, true);
-            e.add<CTransform>(getPosition(RX, RY, TX, TY));
+            Vec2 pos = getPosition(RX, RY, TX, TY);
+            e.add<CTransform>(pos);
+            e.add<CPrevPosition>(pos);
             e.add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
         } else if (type == "NPC") {
             std::string name, AI;
@@ -77,6 +79,7 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
             Vec2 pos = getPosition(RX, RY, TX, TY);
             e.add<CAnimation>(anim, true);
             e.add<CTransform>(pos);
+            e.add<CPrevPosition>(pos);
             e.add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
             e.add<CHealth>(H);
             e.add<CDamage>(D);
