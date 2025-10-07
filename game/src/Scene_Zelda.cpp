@@ -63,9 +63,9 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
             auto e = m_entityManager.addEntity(type);
 
             auto& anim = m_game->assets().getAnimation(name);
-            e->add<CAnimation>(anim, true);
-            e->add<CTransform>(getPosition(RX, RY, TX, TY));
-            e->add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
+            e.add<CAnimation>(anim, true);
+            e.add<CTransform>(getPosition(RX, RY, TX, TY));
+            e.add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
         } else if (type == "NPC") {
             std::string name, AI;
             int RX, RY, TX, TY, BM, BV, H, D;
@@ -75,16 +75,16 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
 
             auto& anim = m_game->assets().getAnimation(name);
             Vec2 pos = getPosition(RX, RY, TX, TY);
-            e->add<CAnimation>(anim, true);
-            e->add<CTransform>(pos);
-            e->add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
-            e->add<CHealth>(H);
-            e->add<CDamage>(D);
+            e.add<CAnimation>(anim, true);
+            e.add<CTransform>(pos);
+            e.add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
+            e.add<CHealth>(H);
+            e.add<CDamage>(D);
 
             if (AI == "Follow") {
                 float s;
                 fin >> s;
-                e->add<CFollowPlayer>(pos, s);
+                e.add<CFollowPlayer>(pos, s);
             } else if (AI == "Patrol") {
                 float s;
                 int n;
@@ -96,7 +96,7 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
                     fin >> x >> y;
                     positions.push_back(getPosition(RX, RY, x, y));
                 }
-                e->add<CPatrol>(positions, s);
+                e.add<CPatrol>(positions, s);
             }
         } else if (type == "Player") {
             fin >> m_playerConfig.X >> m_playerConfig.Y >> m_playerConfig.CX
@@ -115,59 +115,62 @@ Vec2 Scene_Zelda::getPosition(const int rx, const int ry, const int tx, const in
 
 void Scene_Zelda::spawnPlayer() {
     auto p = m_entityManager.addEntity("Player");
-    p->add<CAnimation>(m_game->assets().getAnimation("StandDown"), true);
-    p->add<CTransform>(Vec2(m_playerConfig.X, m_playerConfig.Y));
-    p->add<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, false);
-    p->add<CHealth>((int) m_playerConfig.HEALTH);
-    p->add<CInput>();
-    p->add<CState>();
+    p.add<CAnimation>(m_game->assets().getAnimation("StandDown"), true);
+    p.add<CTransform>(Vec2(m_playerConfig.X, m_playerConfig.Y));
+    p.add<CPrevPosition>() = CPrevPosition();
+    p.add<CVelocity>() = CVelocity();
+    p.add<CFacing>() = CFacing();
+    p.add<CBoundingBox>(Vec2(m_playerConfig.CX, m_playerConfig.CY), true, false);
+    p.add<CHealth>(static_cast<int>(m_playerConfig.HEALTH));
+    p.add<CInput>();
+    p.add<CState>();
 }
 
-static void placeSword(std::string& animName, CTransform& sTransform, const CTransform& eTransform) {
-    if (eTransform.facing.x != 0.0f) {
-        sTransform.pos.x = eTransform.pos.x + eTransform.facing.x * 60.0f;
+static void placeSword(std::string& animName, CTransform& sTransform, const CTransform& eTransform, const CFacing& eFacing) {
+    if (eFacing.facing.x != 0.0f) {
+        sTransform.pos.x = eTransform.pos.x + eFacing.facing.x * 60.0f;
         sTransform.pos.y = eTransform.pos.y;
-        sTransform.scale.x = eTransform.facing.x;
+        sTransform.scale.x = eFacing.facing.x;
         animName = "SwordRight";
-    } else if (eTransform.facing.y != 0.0f) {
-        sTransform.pos.y = eTransform.pos.y - eTransform.facing.y * 60.0f;
+    } else if (eFacing.facing.y != 0.0f) {
+        sTransform.pos.y = eTransform.pos.y - eFacing.facing.y * 60.0f;
         sTransform.pos.x = eTransform.pos.x;
-        sTransform.scale.y = eTransform.facing.y;
+        sTransform.scale.y = eFacing.facing.y;
         animName = "SwordUp";
     }
 }
 
-static void direction(std::string& animName, CTransform& transform) {
-    if (transform.facing.x != 0.0f) {
+static void direction(std::string& animName, CTransform& transform, const CFacing& facing) {
+    if (facing.facing.x != 0.0f) {
         animName.append("Right");
-        transform.scale.x = transform.facing.x;
-    } else if (transform.facing.y == -1.0f) {
+        transform.scale.x = facing.facing.x;
+    } else if (facing.facing.y == -1.0f) {
         animName.append("Down");
         transform.scale.x = 1.0f;
-    } else if (transform.facing.y == 1.0f) {
+    } else if (facing.facing.y == 1.0f) {
         animName.append("Up");
         transform.scale.x = 1.0f;
     }
 }
 
 void Scene_Zelda::sAnimation() {
-    auto& pTransform = player()->get<CTransform>();
-    auto& pState = player()->get<CState>();
+    auto& pTransform = player().get<CTransform>();
+    auto& pState = player().get<CState>();
 
     if (pState.changed) {
         std::string animName = pState.state;
-        direction(animName, pTransform);
-        player()->add<CAnimation>(m_game->assets().getAnimation(animName), true);
+        direction(animName, pTransform, player().get<CFacing>());
+        player().add<CAnimation>(m_game->assets().getAnimation(animName), true);
         pState.changed = false;
     }
 
     for (auto entity: m_entityManager.getEntities()) {
-        if (entity->has<CAnimation>()) {
-            auto& anim = entity->get<CAnimation>();
+        if (entity.has<CAnimation>()) {
+            auto& anim = entity.get<CAnimation>();
             anim.animation.update(GameEngine::s_deltaTime);
 
             if (!anim.repeat && anim.animation.hasEnded()) {
-                entity->destroy();
+                entity.destroy();
             }
         }
     }
@@ -175,7 +178,7 @@ void Scene_Zelda::sAnimation() {
 
 void Scene_Zelda::sCamera() {
     sf::View view = m_game->window().getView();
-    auto& pos = player()->get<CTransform>().pos;
+    auto& pos = player().get<CTransform>().pos;
 
     if (m_follow) {
         view.setCenter({pos.x, pos.y});
@@ -197,39 +200,42 @@ void Scene_Zelda::sCamera() {
 
 void Scene_Zelda::moveEntities(const std::string& tag) {
     for (auto e: m_entityManager.getEntities(tag)) {
-        auto& transform = e->get<CTransform>();
-        transform.prevPos = transform.pos;
-        transform.pos += transform.velocity * GameEngine::s_deltaTime;
+        auto& transform = e.get<CTransform>();
+        auto& prevPos = e.get<CPrevPosition>();
+        auto& velocity = e.get<CVelocity>();
+        prevPos.prevPos = transform.pos;
+        transform.pos += velocity.velocity * GameEngine::s_deltaTime;
     }
 }
 
 void Scene_Zelda::sMovement() {
-    const auto& input = player()->get<CInput>();
-    auto& transform = player()->get<CTransform>();
-    auto& state = player()->get<CState>();
+    const auto& input = player().get<CInput>();
+    auto& transform = player().get<CTransform>();
+    auto& velocity = player().get<CVelocity>();
+    auto& state = player().get<CState>();
 
     const float speed = m_playerConfig.SPEED;
-    Vec2 facing = transform.facing;
+    Vec2 facing = player().get<CFacing>().facing;
     bool run = true;
     if (input.up) {
-        transform.velocity = Vec2(0.0f, -speed);
+        velocity.velocity = Vec2(0.0f, -speed);
         facing = Vec2(0.0, 1.0f);
     } else if (input.down) {
-        transform.velocity = Vec2(0.0f, speed);
+        velocity.velocity = Vec2(0.0f, speed);
         facing = Vec2(0.0, -1.0f);
     } else if (input.right) {
-        transform.velocity = Vec2(speed, 0.0f);
+        velocity.velocity = Vec2(speed, 0.0f);
         facing = Vec2(1.0, 0.0f);
     } else if (input.left) {
-        transform.velocity = Vec2(-speed, 0.0f);
+        velocity.velocity = Vec2(-speed, 0.0f);
         facing = Vec2(-1.0, 0.0f);
     } else {
-        transform.velocity = Vec2();
+        velocity.velocity = Vec2();
         run = false;
     }
 
-    if (transform.facing != facing) {
-        transform.facing = facing;
+    if (player().get<CFacing>().facing != facing) {
+        player().get<CFacing>().facing = facing;
         state.changed = true;
     }
     if (input.attack) {
@@ -253,42 +259,41 @@ void Scene_Zelda::sMovement() {
     moveEntities("NPC");
     moveEntities("Proj");
 
-    for (const auto sword: m_entityManager.getEntities("Sword")) {
+    for (auto sword: m_entityManager.getEntities("Sword")) {
         std::string animName;
-        placeSword(animName, sword->get<CTransform>(), player()->get<CTransform>());
-        sword->add<CAnimation>(m_game->assets().getAnimation(animName), true);
+        placeSword(animName, sword.get<CTransform>(), player().get<CTransform>(), player().get<CFacing>());
+        sword.add<CAnimation>(m_game->assets().getAnimation(animName), true);
     }
 }
 
-void Scene_Zelda::spawnSword(std::shared_ptr<Entity> entity) {
-    auto& input = entity->get<CInput>();
+void Scene_Zelda::spawnSword(Entity entity) {
+    auto& input = entity.get<CInput>();
     if (input.attack)
         return;
 
-    const auto sword = m_entityManager.addEntity("Sword");
-    const auto& eTransform = entity->get<CTransform>();
-    sword->add<CTransform>();
+    auto sword = m_entityManager.addEntity("Sword");
+    const auto& eTransform = entity.get<CTransform>();
+    sword.add<CTransform>();
     std::string animName;
-    placeSword(animName, sword->get<CTransform>(), eTransform);
+    placeSword(animName, sword.get<CTransform>(), eTransform, player().get<CFacing>());
     auto& anim = m_game->assets().getAnimation(animName);
-    sword->add<CAnimation>(anim, false);
-    sword->add<CBoundingBox>(anim.getSize());
-    sword->add<CDamage>(1);
-    sword->add<CLifeSpan>(0.1f);
+    sword.add<CAnimation>(anim, true);
+    sword.add<CBoundingBox>(anim.getSize());
+    sword.add<CDamage>(1);
+    sword.add<CLifeSpan>(0.1f);
     input.attack = true;
     m_game->playSound("Slash");
 }
 
 void Scene_Zelda::spawnManyEntities() {
-    auto spawnPos = player()->get<CTransform>();
+    auto spawnPos = player().get<CTransform>();
 
-    for (size_t i = 0; i < 360; i++) {
+    for (size_t i = 0; i < 3600; i++) {
         auto e = m_entityManager.addEntity("Proj");
         spawnPos.angle = sf::degrees(i);
-        spawnPos.velocity = {0.0f, 150.0f};
-        spawnPos.velocity.rotate(i);
-        e->add<CTransform>(spawnPos.pos, spawnPos.velocity, spawnPos.scale, spawnPos.angle + sf::degrees(180.0f));
-        e->add<CAnimation>(m_game->assets().getAnimation("SwordUp"), false);
+        e.add<CTransform>(spawnPos.pos, spawnPos.scale, spawnPos.angle + sf::degrees(180.0f));
+        e.add<CAnimation>(m_game->assets().getAnimation("SwordUp"), false);
+        e.add<CVelocity>(Vec2(0.0f, 150.0f).rotate(i));
     }
 }
 
@@ -296,7 +301,7 @@ void Scene_Zelda::onEnd() {
     m_game->changeScene("MENU", nullptr, true);
 }
 
-std::shared_ptr<Entity> Scene_Zelda::player() {
+Entity Scene_Zelda::player() {
     auto& entities = m_entityManager.getEntities("Player");
     if (entities.size() != 1) {
         std::cerr << "There is currently no player entity" << std::endl;
@@ -308,76 +313,78 @@ std::shared_ptr<Entity> Scene_Zelda::player() {
 
 void Scene_Zelda::sStatus() {
     for (auto sword: m_entityManager.getEntities("Sword")) {
-        auto& lifespan = sword->get<CLifeSpan>();
+        auto& lifespan = sword.get<CLifeSpan>();
         lifespan.lifespan -= GameEngine::s_deltaTime;
 
         if (lifespan.lifespan < 0.0f) {
-            sword->destroy();
-            player()->get<CInput>().attack = false;
+            sword.destroy();
+            player().get<CInput>().attack = false;
         }
     }
 
-    if (player()->has<CInvincibility>()) {
-        auto& invincibility = player()->get<CInvincibility>();
+    if (player().has<CInvincibility>()) {
+        auto& invincibility = player().get<CInvincibility>();
         invincibility.duration -= GameEngine::s_deltaTime;
 
         if (invincibility.duration < 0.0f) {
-            player()->remove<CInvincibility>();
+            player().remove<CInvincibility>();
         }
     }
 }
 
 void Scene_Zelda::sAI() {
-    for (const auto enemy: m_entityManager.getEntities("NPC")) {
-        if (enemy->has<CFollowPlayer>()) {
-            auto& follow = enemy->get<CFollowPlayer>();
-            auto& transform = enemy->get<CTransform>();
-            auto& pPos = player()->get<CTransform>().pos;
+    for (auto enemy: m_entityManager.getEntities("NPC")) {
+        if (enemy.has<CFollowPlayer>()) {
+            auto& follow = enemy.get<CFollowPlayer>();
+            auto& transform = enemy.get<CTransform>();
+            auto& velocity = enemy.get<CVelocity>();
+            auto& pPos = player().get<CTransform>().pos;
             bool visionBlocked = false;
 
             for (const auto obstacle: m_entityManager.getEntities()) {
-                if (!obstacle->has<CBoundingBox>()) continue;
-                if (!obstacle->get<CBoundingBox>().blockVision) continue;
+                if (!obstacle.has<CBoundingBox>()) continue;
+                if (!obstacle.get<CBoundingBox>().blockVision) continue;
 
+                // TODO: try leave loop early
                 visionBlocked |= Physics::EntityIntersect(transform.pos, pPos, obstacle);
             }
 
             if (visionBlocked) {
                 if (follow.home.distSq(transform.pos) < 25.0f) {
-                    transform.velocity = Vec2();
+                    velocity.velocity = Vec2();
                     transform.pos = follow.home;
                 } else {
-                    transform.velocity = follow.home - transform.pos;
+                    velocity.velocity = follow.home - transform.pos;
                 }
             } else {
-                transform.velocity = pPos - transform.pos;
+                velocity.velocity = pPos - transform.pos;
             }
-            transform.velocity.setMag(follow.speed);
+            velocity.velocity.setMag(follow.speed);
         }
 
-        if (enemy->has<CPatrol>()) {
-            auto& patrol = enemy->get<CPatrol>();
-            auto& transform = enemy->get<CTransform>();
+        if (enemy.has<CPatrol>()) {
+            auto& patrol = enemy.get<CPatrol>();
+            auto& transform = enemy.get<CTransform>();
+            auto& velocity = enemy.get<CVelocity>();
 
             if (patrol.positions[patrol.currentPosition].distSq(transform.pos) < 25.0f) {
                 patrol.currentPosition += 1;
                 patrol.currentPosition %= patrol.positions.size();
             }
 
-            transform.velocity = patrol.positions[patrol.currentPosition] - transform.pos;
-            transform.velocity.setMag(patrol.speed);
+            velocity.velocity = patrol.positions[patrol.currentPosition] - transform.pos;
+            velocity.velocity.setMag(patrol.speed);
         }
     }
 }
 
-static void resolveTileCollision(std::shared_ptr<Entity> tile, std::shared_ptr<Entity> entity) {
+static void resolveTileCollision(Entity tile, Entity entity) {
     const Vec2 overlap = Physics::GetOverlap(tile, entity);
     const Vec2 prevOverlap = Physics::GetPreviousOverlap(tile, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
-        const auto& tilePos = tile->get<CTransform>().pos;
-        auto& entityPos = entity->get<CTransform>().pos;
-        auto& entityPrevPos = entity->get<CTransform>().prevPos;
+        const auto& tilePos = tile.get<CTransform>().pos;
+        auto& entityPos = entity.get<CTransform>().pos;
 
         if (prevOverlap.y > 0.0f) {
             entityPos.x += entityPos.x < tilePos.x ? -overlap.x : overlap.x;
@@ -402,17 +409,17 @@ void Scene_Zelda::tileCollision() {
 void Scene_Zelda::playerEnemyCollision() {
     auto p = player();
 
-    if (p->has<CInvincibility>())
+    if (p.has<CInvincibility>())
         return;
 
     for (const auto enemy: m_entityManager.getEntities("NPC")) {
         const Vec2 overlap = Physics::GetOverlap(enemy, p);
         if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
-            p->get<CHealth>().current -= enemy->get<CDamage>().damage;
-            p->add<CInvincibility>(1.0f);
+            p.get<CHealth>().current -= enemy.get<CDamage>().damage;
+            p.add<CInvincibility>(1.0f);
 
-            if (p->get<CHealth>().current <= 0) {
-                p->destroy();
+            if (p.get<CHealth>().current <= 0) {
+                p.destroy();
                 spawnPlayer();
                 m_game->playSound("LinkDie");
             } else {
@@ -422,20 +429,20 @@ void Scene_Zelda::playerEnemyCollision() {
     }
 }
 
-void Scene_Zelda::resolveHeartCollision(std::shared_ptr<Entity> heart, std::shared_ptr<Entity> entity) {
+void Scene_Zelda::resolveHeartCollision(Entity heart, Entity entity) {
     const Vec2 overlap = Physics::GetOverlap(heart, entity);
     const Vec2 prevOverlap = Physics::GetPreviousOverlap(heart, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
-        entity->get<CHealth>().current = entity->get<CHealth>().max;
-        heart->destroy();
+        entity.get<CHealth>().current = entity.get<CHealth>().max;
+        heart.destroy();
         m_game->playSound("GetItem");
     }
 }
 
 void Scene_Zelda::heartCollision() {
     for (const auto tile: m_entityManager.getEntities("Tile")) {
-        if (tile->get<CAnimation>().animation.getName() != "Heart")
+        if (tile.get<CAnimation>().animation.getName() != "Heart")
             continue;
 
         resolveHeartCollision(tile, player());
@@ -447,19 +454,19 @@ void Scene_Zelda::heartCollision() {
 }
 
 void Scene_Zelda::swordEnemyCollision() {
-    for (const auto sword: m_entityManager.getEntities("Sword")) {
-        if (!sword->has<CDamage>())
+    for (auto sword: m_entityManager.getEntities("Sword")) {
+        if (!sword.has<CDamage>())
             continue;
 
-        for (const auto enemy: m_entityManager.getEntities("NPC")) {
+        for (auto enemy: m_entityManager.getEntities("NPC")) {
             const Vec2 overlap = Physics::GetOverlap(sword, enemy);
 
             if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
-                enemy->get<CHealth>().current -= sword->get<CDamage>().damage;
-                sword->remove<CDamage>();
+                enemy.get<CHealth>().current -= sword.get<CDamage>().damage;
+                sword.remove<CDamage>();
 
-                if (enemy->get<CHealth>().current <= 0) {
-                    enemy->destroy();
+                if (enemy.get<CHealth>().current <= 0) {
+                    enemy.destroy();
                     m_game->playSound("EnemyDie");
                 } else {
                     m_game->playSound("EnemyHit");
@@ -490,14 +497,14 @@ static void entitiesTable(const EntityVec& entityVec) {
         for (const auto e: entityVec) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("%zu", e->id());
+            ImGui::Text("%zu", e.id());
             ImGui::TableNextColumn();
-            ImGui::Text("%s", e->tag().c_str());
+            ImGui::Text("%s", e.tag().c_str());
             ImGui::TableNextColumn();
-            ImGui::Text("%s", e->get<CAnimation>().animation.getName().c_str());
+            ImGui::Text("%s", e.get<CAnimation>().animation.getName().c_str());
             ImGui::TableNextColumn();
-            ImGui::Text("(%i,%i)", static_cast<int>(e->get<CTransform>().pos.x),
-                        static_cast<int>(e->get<CTransform>().pos.y));
+            ImGui::Text("(%i,%i)", static_cast<int>(e.get<CTransform>().pos.x),
+                        static_cast<int>(e.get<CTransform>().pos.y));
         }
 
         ImGui::EndTable();
@@ -563,18 +570,18 @@ void Scene_Zelda::sRender() {
     tick.setFillColor(sf::Color::Black);
 
     if (m_drawTextures) {
-        for (const auto e: m_entityManager.getEntities()) {
-            auto& transform = e->get<CTransform>();
+        for (auto e: m_entityManager.getEntities()) {
+            auto& transform = e.get<CTransform>();
             sf::Color c = sf::Color::White;
-            if (e->has<CInvincibility>()) {
+            if (e.has<CInvincibility>()) {
                 c = sf::Color(255, 255, 255, 128);
             }
 
-            if (e->has<CAnimation>()) {
-                auto& animation = e->get<CAnimation>().animation;
-                animation.getSprite().setRotation(transform.angle);
+            if (e.has<CAnimation>()) {
+                auto& animation = e.get<CAnimation>().animation;
                 animation.getSprite().setPosition({transform.pos.x, transform.pos.y});
                 animation.getSprite().setScale({transform.scale.x, transform.scale.y});
+                animation.getSprite().setRotation(transform.angle);
                 animation.getSprite().setColor(c);
                 m_game->window().draw(animation.getSprite());
             }
@@ -582,9 +589,9 @@ void Scene_Zelda::sRender() {
 
         // draw health bars
         for (const auto e: m_entityManager.getEntities()) {
-            const auto& transform = e->get<CTransform>();
-            if (e->has<CHealth>()) {
-                const auto& h = e->get<CHealth>();
+            const auto& transform = e.get<CTransform>();
+            if (e.has<CHealth>()) {
+                const auto& h = e.get<CHealth>();
                 Vec2 size(64, 6);
                 sf::RectangleShape rect({size.x, size.y});
                 rect.setPosition({transform.pos.x - 32, transform.pos.y - 48});
@@ -593,7 +600,7 @@ void Scene_Zelda::sRender() {
                 rect.setOutlineThickness(2.0f);
                 m_game->window().draw(rect);
 
-                const float ratio = (float) (h.current) / h.max;
+                const float ratio = static_cast<float>(h.current) / h.max;
                 size.x *= ratio;
                 rect.setSize({size.x, size.y});
                 rect.setFillColor(sf::Color(255, 0, 0));
@@ -637,9 +644,9 @@ void Scene_Zelda::sRender() {
         sf::CircleShape dot(4.0f);
         dot.setFillColor(sf::Color::Black);
         for (auto e: m_entityManager.getEntities()) {
-            if (e->has<CBoundingBox>()) {
-                const auto& box = e->get<CBoundingBox>();
-                auto& transform = e->get<CTransform>();
+            if (e.has<CBoundingBox>()) {
+                const auto& box = e.get<CBoundingBox>();
+                auto& transform = e.get<CTransform>();
                 sf::RectangleShape rect;
                 rect.setSize(sf::Vector2f(box.size.x - 1, box.size.y - 1));
                 rect.setOrigin(sf::Vector2f(box.halfSize.x, box.halfSize.y));
@@ -654,24 +661,24 @@ void Scene_Zelda::sRender() {
                 m_game->window().draw(rect);
             }
 
-            if (e->has<CPatrol>()) {
-                auto& patrol = e->get<CPatrol>().positions;
+            if (e.has<CPatrol>()) {
+                auto& patrol = e.get<CPatrol>().positions;
                 for (auto& p: patrol) {
                     dot.setPosition({p.x, p.y});
                     m_game->window().draw(dot);
                 }
             }
 
-            if (e->has<CFollowPlayer>()) {
+            if (e.has<CFollowPlayer>()) {
                 sf::VertexArray lines(sf::PrimitiveType::LineStrip, 2);
-                lines[0].position.x = e->get<CTransform>().pos.x;
-                lines[0].position.y = e->get<CTransform>().pos.y;
+                lines[0].position.x = e.get<CTransform>().pos.x;
+                lines[0].position.y = e.get<CTransform>().pos.y;
                 lines[0].color = sf::Color::Black;
-                lines[1].position.x = player()->get<CTransform>().pos.x;
-                lines[1].position.y = player()->get<CTransform>().pos.y;
+                lines[1].position.x = player().get<CTransform>().pos.x;
+                lines[1].position.y = player().get<CTransform>().pos.y;
                 lines[1].color = sf::Color::Black;
                 m_game->window().draw(lines);
-                dot.setPosition({e->get<CFollowPlayer>().home.x, e->get<CFollowPlayer>().home.y});
+                dot.setPosition({e.get<CFollowPlayer>().home.x, e.get<CFollowPlayer>().home.y});
                 m_game->window().draw(dot);
             }
         }
@@ -679,7 +686,7 @@ void Scene_Zelda::sRender() {
 }
 
 void Scene_Zelda::sDoAction(const Action& action) {
-    auto& input = player()->get<CInput>();
+    auto& input = player().get<CInput>();
 
     if (action.type() == "START") {
         if (action.name() == "TOGGLE_TEXTURE") { m_drawTextures = !m_drawTextures; } else if (

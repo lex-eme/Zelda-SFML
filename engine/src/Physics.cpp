@@ -7,23 +7,23 @@ static Vec2 overlap(const Vec2& p1, const Vec2& p2, const Vec2& s1, const Vec2& 
     return {overlapX, overlapY};
 }
 
-Vec2 Physics::GetOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2) {
-    const auto& p1 = e1->get<CTransform>().pos;
-    const auto& p2 = e2->get<CTransform>().pos;
-    const auto& bb1 = e1->get<CBoundingBox>().halfSize;
-    const auto& bb2 = e2->get<CBoundingBox>().halfSize;
+Vec2 Physics::GetOverlap(Entity e1, Entity e2) {
+    const auto& p1 = e1.get<CTransform>().pos;
+    const auto& p2 = e2.get<CTransform>().pos;
+    const auto& bb1 = e1.get<CBoundingBox>().halfSize;
+    const auto& bb2 = e2.get<CBoundingBox>().halfSize;
     return overlap(p1, p2, bb1, bb2);
 }
 
-Vec2 Physics::GetPreviousOverlap(std::shared_ptr<Entity> e1, std::shared_ptr<Entity> e2) {
-    const auto& p1 = e1->get<CTransform>().prevPos;
-    const auto& p2 = e2->get<CTransform>().prevPos;
-    const auto& bb1 = e1->get<CBoundingBox>().halfSize;
-    const auto& bb2 = e2->get<CBoundingBox>().halfSize;
+Vec2 Physics::GetPreviousOverlap(Entity e1, Entity e2) {
+    const auto& p1 = e1.get<CPrevPosition>().prevPos;
+    const auto& p2 = e2.get<CPrevPosition>().prevPos;
+    const auto& bb1 = e1.get<CBoundingBox>().halfSize;
+    const auto& bb2 = e2.get<CBoundingBox>().halfSize;
     return overlap(p1, p2, bb1, bb2);
 }
 
-bool Physics::IsInside(const Vec2& pos, std::shared_ptr<Entity> e) {
+bool Physics::IsInside(const Vec2& pos, Entity e) {
     return false;
 }
 
@@ -41,10 +41,10 @@ Intersect Physics::LineIntersect(const Vec2& a, const Vec2& b, const Vec2& c, co
     return {false, Vec2()};
 }
 
-bool Physics::EntityIntersect(const Vec2& a, const Vec2& b, std::shared_ptr<Entity> e) {
+bool Physics::EntityIntersect(const Vec2& a, const Vec2& b, Entity e) {
     bool intersects = false;
-    auto& halfSize = e->get<CBoundingBox>().halfSize;
-    auto& pos = e->get<CTransform>().pos;
+    auto& halfSize = e.get<CBoundingBox>().halfSize;
+    auto& pos = e.get<CTransform>().pos;
 
     Vec2 tl(pos.x - halfSize.x, pos.y - halfSize.y);
     Vec2 tr(pos.x + halfSize.x, pos.y - halfSize.y);

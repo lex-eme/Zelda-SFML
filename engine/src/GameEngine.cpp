@@ -68,6 +68,8 @@ void GameEngine::init(const std::string& path) {
         std::cerr << "Could not init ImGui-SFML." << std::endl;
         exit(1);
     }
+
+    EntityMemoryPool::Instance();
 }
 
 void GameEngine::update() {
@@ -87,14 +89,22 @@ void GameEngine::update() {
 
 std::ostream& operator<<(std::ostream& lhs, const sf::Joystick::Axis& rhs) {
     switch (rhs) {
-        case sf::Joystick::Axis::X: lhs << 'X'; break;
-        case sf::Joystick::Axis::Y: lhs << 'Y'; break;
-        case sf::Joystick::Axis::Z: lhs << 'Z'; break;
-        case sf::Joystick::Axis::R: lhs << 'R'; break;
-        case sf::Joystick::Axis::U: lhs << 'U'; break;
-        case sf::Joystick::Axis::V: lhs << 'V'; break;
-        case sf::Joystick::Axis::PovX: lhs << "PovX"; break;
-        case sf::Joystick::Axis::PovY: lhs << "PovY"; break;
+        case sf::Joystick::Axis::X: lhs << 'X';
+            break;
+        case sf::Joystick::Axis::Y: lhs << 'Y';
+            break;
+        case sf::Joystick::Axis::Z: lhs << 'Z';
+            break;
+        case sf::Joystick::Axis::R: lhs << 'R';
+            break;
+        case sf::Joystick::Axis::U: lhs << 'U';
+            break;
+        case sf::Joystick::Axis::V: lhs << 'V';
+            break;
+        case sf::Joystick::Axis::PovX: lhs << "PovX";
+            break;
+        case sf::Joystick::Axis::PovY: lhs << "PovY";
+            break;
     }
     return lhs;
 }

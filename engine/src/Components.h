@@ -11,24 +11,51 @@ struct Component {
 
 struct CTransform : Component {
     Vec2 pos = {0.0f, 0.0f};
-    Vec2 prevPos = {0.0f, 0.0f};
     Vec2 scale = {1.0f, 1.0f};
-    Vec2 velocity = {0.0f, 0.0f};
-    Vec2 facing = {0.0f, 1.0f};
     sf::Angle angle;
 
     CTransform() = default;
 
     explicit CTransform(const Vec2& p)
-        : pos(p), prevPos(p) {
+        : pos(p) {
     }
 
     CTransform(const Vec2& p, const Vec2& sc)
-        : pos(p), prevPos(p), scale(sc) {
+        : pos(p), scale(sc) {
     }
 
-    CTransform(const Vec2& p, const Vec2& sp, const Vec2& sc, sf::Angle a)
-        : pos(p), prevPos(p), scale(sc), velocity(sp), angle(a) {
+    CTransform(const Vec2& p, const Vec2& sc, const sf::Angle a)
+        : pos(p), scale(sc), angle(a) {
+    }
+};
+
+struct CPrevPosition : Component {
+    Vec2 prevPos = {0.0f, 0.0f};
+
+    CPrevPosition() = default;
+
+    explicit CPrevPosition(const Vec2& p)
+        : prevPos(p) {
+    }
+};
+
+struct CVelocity : Component {
+    Vec2 velocity = {0.0f, 0.0f};
+
+    CVelocity() = default;
+
+    explicit CVelocity(const Vec2& v)
+        : velocity(v) {
+    }
+};
+
+struct CFacing : Component {
+    Vec2 facing = {0.0f, 1.0f};
+
+    CFacing() = default;
+
+    explicit CFacing(const Vec2& f)
+        : facing(f) {
     }
 };
 

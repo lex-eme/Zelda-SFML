@@ -3,7 +3,7 @@
 void EntityManager::update() {
     for (auto e: m_entitiesToAdd) {
         m_entities.push_back(e);
-        m_entityMap[e->m_tag].push_back(e);
+        m_entityMap[e.tag()].push_back(e);
     }
 
     m_entitiesToAdd.clear();
@@ -14,8 +14,8 @@ void EntityManager::update() {
     }
 }
 
-std::shared_ptr<Entity> EntityManager::addEntity(const std::string& tag) {
-    auto entity = std::shared_ptr<Entity>(new Entity(m_totalEntities++, tag));
+Entity EntityManager::addEntity(const std::string& tag) {
+    const Entity entity = EntityMemoryPool::Instance().addEntity(tag);
     m_entitiesToAdd.push_back(entity);
     return entity;
 }
@@ -35,7 +35,7 @@ const std::map<std::string, EntityVec>& EntityManager::getEntityMap() {
 void EntityManager::removeDeadEntities(EntityVec& vec) {
     auto it = vec.begin();
     while (it != vec.end()) {
-        if (!(it->get()->isActive())) {
+        if (!it->isActive()) {
             it = vec.erase(it);
         } else {
             ++it;
