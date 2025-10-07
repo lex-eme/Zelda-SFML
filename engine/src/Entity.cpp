@@ -1,23 +1,21 @@
 #include "Entity.h"
 
-Entity::Entity(const size_t id, const std::string& tag)
-    : m_ID(id), m_tag(tag),
-      m_components(CTransform(), CLifeSpan(), CDamage(), CInput(), CBoundingBox(), CAnimation(), CState(),
-                   CInvincibility(), CHealth(), CPatrol(), CFollowPlayer()) {
-}
-
-bool Entity::isActive() const {
-    return m_active;
+Entity::Entity(const size_t id)
+    : m_ID(id) {
 }
 
 const std::string& Entity::tag() const {
-    return m_tag;
+    return EntityMemoryPool::Instance().getTag(m_ID);
+}
+
+bool Entity::isActive() const {
+    return EntityMemoryPool::Instance().getIsActive(id());
 }
 
 size_t Entity::id() const {
     return m_ID;
 }
 
-void Entity::destroy() {
-    m_active = false;
+void Entity::destroy() const {
+    EntityMemoryPool::Instance().removeEntity(m_ID);
 }

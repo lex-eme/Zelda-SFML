@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Scene.h"
+#include "Entity.h"
 
 class Scene_Zelda : public Scene {
     struct PlayerConfig {
@@ -28,10 +29,10 @@ private:
     void onEnd() override;
     void update(float deltaTime) override;
     void spawnPlayer();
-    void spawnSword(std::shared_ptr<Entity> entity);
+    void spawnSword(Entity entity);
     void spawnManyEntities();
     Vec2 getPosition(int rx, int ry, int tx, int ty) const;
-    std::shared_ptr<Entity> player();
+    Entity player();
 
     // Systems
     void sMovement();
@@ -49,6 +50,6 @@ private:
     void tileCollision();
     void playerEnemyCollision();
     void heartCollision();
-    void resolveHeartCollision(std::shared_ptr<Entity> heart, std::shared_ptr<Entity> entity);
+    void resolveHeartCollision(Entity heart, Entity entity);
     void swordEnemyCollision();
 };

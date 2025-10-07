@@ -12,6 +12,8 @@ set(SOURCES
         src/Entity.h
         src/EntityManager.cpp
         src/EntityManager.h
+        src/EntityMemoryPool.cpp
+        src/EntityMemoryPool.h
         src/GameEngine.cpp
         src/GameEngine.h
         src/Physics.cpp

@@ -5,7 +5,7 @@
 
 #include "Entity.h"
 
-using EntityVec = std::vector<std::shared_ptr<Entity>>;
+using EntityVec = std::vector<Entity>;
 using EntityMap = std::map<std::string, EntityVec>;
 
 class EntityManager {
@@ -19,12 +19,12 @@ public:
 
     void update();
 
-    std::shared_ptr<Entity> addEntity(const std::string& tag);
+    Entity addEntity(const std::string& tag);
 
     const EntityVec& getEntities();
     const EntityVec& getEntities(const std::string& tag);
     const std::map<std::string, EntityVec>& getEntityMap();
 
 private:
-    void removeDeadEntities(EntityVec& vec);
+    static void removeDeadEntities(EntityVec& vec);
 };
