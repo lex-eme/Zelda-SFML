@@ -29,6 +29,7 @@ private:
     void update(float deltaTime) override;
     void spawnPlayer();
     void spawnSword(std::shared_ptr<Entity> entity);
+    void spawnManyEntities();
     Vec2 getPosition(int rx, int ry, int tx, int ty) const;
     std::shared_ptr<Entity> player();
 

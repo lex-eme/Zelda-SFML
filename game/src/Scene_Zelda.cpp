@@ -251,6 +251,7 @@ void Scene_Zelda::sMovement() {
 
     moveEntities("Player");
     moveEntities("NPC");
+    moveEntities("Proj");
 
     for (const auto sword: m_entityManager.getEntities("Sword")) {
         std::string animName;
@@ -270,12 +271,25 @@ void Scene_Zelda::spawnSword(std::shared_ptr<Entity> entity) {
     std::string animName;
     placeSword(animName, sword->get<CTransform>(), eTransform);
     auto& anim = m_game->assets().getAnimation(animName);
-    sword->add<CAnimation>(anim, true);
+    sword->add<CAnimation>(anim, false);
     sword->add<CBoundingBox>(anim.getSize());
     sword->add<CDamage>(1);
     sword->add<CLifeSpan>(0.1f);
     input.attack = true;
     m_game->playSound("Slash");
+}
+
+void Scene_Zelda::spawnManyEntities() {
+    auto spawnPos = player()->get<CTransform>();
+
+    for (size_t i = 0; i < 360; i++) {
+        auto e = m_entityManager.addEntity("Proj");
+        spawnPos.angle = sf::degrees(i);
+        spawnPos.velocity = {0.0f, 150.0f};
+        spawnPos.velocity.rotate(i);
+        e->add<CTransform>(spawnPos.pos, spawnPos.velocity, spawnPos.scale, spawnPos.angle + sf::degrees(180.0f));
+        e->add<CAnimation>(m_game->assets().getAnimation("SwordUp"), false);
+    }
 }
 
 void Scene_Zelda::onEnd() {
@@ -496,6 +510,7 @@ void Scene_Zelda::sGUI() {
     const ImGuiContext& g = *ImGui::GetCurrentContext();
     const ImGuiIO& io = g.IO;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::Text("Entity count: %zu", m_entityManager.getEntities().size());
 
     if (ImGui::BeginTabBar("MyTabBar")) {
         if (ImGui::BeginTabItem("Debug")) {
@@ -674,7 +689,7 @@ void Scene_Zelda::sDoAction(const Action& action) {
             action.name() == "PAUSE") { m_paused = !m_paused; } else if (action.name() == "QUIT") { onEnd(); } else if (
             action.name() == "UP") { input.up = true; } else if (action.name() == "DOWN") { input.down = true; } else if
         (action.name() == "LEFT") { input.left = true; } else if (action.name() == "RIGHT") { input.right = true; } else
-            if (action.name() == "ATTACK") { spawnSword(player()); }
+            if (action.name() == "ATTACK") { spawnSword(player()); spawnManyEntities(); }
     } else if (action.type() == "END") {
         if (action.name() == "UP") { input.up = false; } else if (
             action.name() == "DOWN") { input.down = false; } else if (
