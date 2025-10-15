@@ -129,7 +129,8 @@ void Scene_Zelda::spawnPlayer() {
     p.add<CState>();
 }
 
-static void placeSword(std::string& animName, CTransform& sTransform, const CTransform& eTransform, const CFacing& eFacing) {
+static void placeSword(std::string& animName, CTransform& sTransform, const CTransform& eTransform,
+                       const CFacing& eFacing) {
     if (eFacing.facing.x != 0.0f) {
         sTransform.pos.x = eTransform.pos.x + eFacing.facing.x * 60.0f;
         sTransform.pos.y = eTransform.pos.y;
@@ -515,6 +516,7 @@ static void entitiesTable(const EntityVec& entityVec) {
 }
 
 void Scene_Zelda::sGUI() {
+    renderAssetBrowser();
     ImGui::Begin("Scene Properties");
     ImGui::GetCurrentContext();
     const ImGuiContext& g = *ImGui::GetCurrentContext();
@@ -559,6 +561,102 @@ void Scene_Zelda::sGUI() {
 
         ImGui::EndTabBar();
     }
+
+    ImGui::End();
+}
+
+void Scene_Zelda::renderAssetBrowser() {
+    ImGui::Begin("Asset Browser");
+
+
+    ImGui::BeginChild("Map"); {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        ImVec2 windowPos = ImGui::GetWindowPos();
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        float scrollX = ImGui::GetScrollX();
+        float scrollY = ImGui::GetScrollY();
+
+        // Make sure the tilemap renders inside the child window
+        drawList->PushClipRect(windowPos, ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y));
+
+        int columnCount = 8;
+        int tileSize = 50;
+        ImVec4 clearColor(0.392f, 0.584f, 0.929f, 1.0f);
+        ImU32 clearColorU32 = ImGui::ColorConvertFloat4ToU32(clearColor);
+        auto& tiles = m_entityManager.getEntities("Tile");
+        int rowCount = ceilf((float) tiles.size() / columnCount);
+
+        // Background color
+        ImVec2 tilemapPos = ImVec2(windowPos.x - scrollX, windowPos.y - scrollY);
+        ImVec2 tilemapSize = ImVec2(columnCount * tileSize, rowCount * tileSize);
+        drawList->AddRectFilled(tilemapPos, {tilemapPos.x + tilemapSize.x, tilemapPos.y + tilemapSize.y},
+                                clearColorU32);
+
+        // Render tiles
+        for (int i = 0; i < tiles.size(); i += 1) {
+            int x = i % columnCount;
+            int y = i / columnCount;
+            ImVec2 pos = {windowPos.x + x * tileSize - scrollX, windowPos.y + y * tileSize - scrollY};
+            ImVec2 size = ImVec2(pos.x + tileSize, pos.y + tileSize);
+
+            auto textureHandle = reinterpret_cast<ImTextureID>(tiles.at(i).get<CAnimation>().animation.getSprite().
+                getTexture().getNativeHandle());
+
+            drawList->AddImage(textureHandle, pos, size);
+        }
+
+        // Draw grid
+        {
+            const ImVec4 gridColor(0.678f, 0.678f, 0.678f, 1.0f);
+            ImU32 gridColorU32 = ImGui::ColorConvertFloat4ToU32(gridColor);
+            float gridThickness = 1.0f;
+
+            // Vertical lines
+            for (int x = 0; x <= columnCount; x += 1) {
+                ImVec2 p1 = ImVec2(tilemapPos.x + x * tileSize, tilemapPos.y);
+                ImVec2 p2 = ImVec2(tilemapPos.x + x * tileSize, tilemapPos.y + tilemapSize.y);
+                drawList->AddLine(p1, p2, gridColorU32, gridThickness);
+            }
+
+            // Horizontal lines
+            for (int y = 0; y <= rowCount; y += 1) {
+                ImVec2 p1 = ImVec2(tilemapPos.x, tilemapPos.y + y * tileSize);
+                ImVec2 p2 = ImVec2(tilemapPos.x + tilemapSize.x, tilemapPos.y + y * tileSize);
+                drawList->AddLine(p1, p2, gridColorU32, gridThickness);
+            }
+        }
+
+        ImGui::Dummy(ImVec2(tileSize * columnCount, tileSize * rowCount));
+
+        // Convert cursor position to local coordinates within the tilemap
+        int tileIndex = -1;
+        ImVec2 cursorPos = ImGui:: GetMousePos();
+        ImVec2 localCursorPos = ImVec2(cursorPos.x - windowPos.x + scrollX, cursorPos.y - windowPos.y + scrollY);
+        int tileIndexX = localCursorPos.x / tileSize;
+        int tileIndexY = localCursorPos.y / tileSize;
+        if (tileIndexX >= 0 && tileIndexY >= 0 && tileIndexX < 8 && tileIndexY < rowCount) {
+            tileIndex = tileIndexX + tileIndexY * columnCount;
+        }
+
+        if (tileIndex >= 0 && tileIndex < tiles.size() && ImGui::IsMouseHoveringRect(tilemapPos, ImVec2(tilemapPos.x + tilemapSize.x, tilemapPos.y + tilemapSize. y))) {
+            ImVec2 topCorner(tileIndexX * tileSize + windowPos.x - scrollX, tileIndexY * tileSize + windowPos.y - scrollY);
+            ImVec2 bottomCorner(topCorner.x + tileSize, topCorner.y + tileSize);
+            drawList->AddRect(
+                topCorner, bottomCorner,
+                IM_COL32(255, 255, 255, 255),
+                0.0f,
+                0,
+                4.0f
+            );
+
+            if (ImGui:: IsMouseClicked(ImGuiMouseButton_Left)) {
+                // TODO: Set selected tile here
+            }
+        }
+
+        drawList->PopClipRect();
+    }
+    ImGui::EndChild();
 
     ImGui::End();
 }
@@ -698,7 +796,7 @@ void Scene_Zelda::sDoAction(const Action& action) {
             action.name() == "TOGGLE_FOLLOW") { m_follow = !m_follow; } else if (
             action.name() == "PAUSE") { m_paused = !m_paused; } else if (action.name() == "QUIT") { onEnd(); } else if (
             action.name() == "UP") { input.up = true; } else if (action.name() == "DOWN") { input.down = true; } else if
-        (action.name() == "LEFT") { input.left = true; } else if (action.name() == "RIGHT") { input.right = true; } else
+            (action.name() == "LEFT") { input.left = true; } else if (action.name() == "RIGHT") { input.right = true; } else
             if (action.name() == "ATTACK") { spawnSword(player()); spawnManyEntities(); }
     } else if (action.type() == "END") {
         if (action.name() == "UP") { input.up = false; } else if (
