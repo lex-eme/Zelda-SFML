@@ -19,7 +19,10 @@ set(SOURCES
         src/Physics.cpp
         src/Physics.h
         src/Scene.cpp
-        src/Scene.h)
+        src/Scene.h
+        src/SpriteSheet.cpp
+        src/SpriteSheet.h
+)
 
 add_library(Engine STATIC)
 target_sources(Engine PRIVATE ${SOURCES})

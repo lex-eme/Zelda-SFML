@@ -3,6 +3,7 @@
 #include <iostream>
 #include "imgui-SFML.h"
 
+sf::Texture GameEngine::s_defaultTexture;
 float GameEngine::s_deltaTime = 0.0f;
 
 GameEngine::GameEngine(const std::string& path) {

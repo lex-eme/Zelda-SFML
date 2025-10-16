@@ -565,9 +565,8 @@ void Scene_Zelda::sGUI() {
     ImGui::End();
 }
 
-void Scene_Zelda::renderAssetBrowser() {
+void Scene_Zelda::renderAssetBrowser() const {
     ImGui::Begin("Asset Browser");
-
 
     ImGui::BeginChild("Map"); {
         ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -581,10 +580,10 @@ void Scene_Zelda::renderAssetBrowser() {
 
         int columnCount = 8;
         int tileSize = 50;
-        ImVec4 clearColor(0.392f, 0.584f, 0.929f, 1.0f);
+        constexpr ImVec4 clearColor(0.392f, 0.584f, 0.929f, 1.0f);
         ImU32 clearColorU32 = ImGui::ColorConvertFloat4ToU32(clearColor);
-        auto& tiles = m_entityManager.getEntities("Tile");
-        int rowCount = ceilf((float) tiles.size() / columnCount);
+        SpriteSheet sheet = m_game->assets().getSpriteSheet("Env1");
+        size_t rowCount = sheet.size() / columnCount + (sheet.size() % columnCount == 0 ? 0 : 1);
 
         // Background color
         ImVec2 tilemapPos = ImVec2(windowPos.x - scrollX, windowPos.y - scrollY);
@@ -593,21 +592,20 @@ void Scene_Zelda::renderAssetBrowser() {
                                 clearColorU32);
 
         // Render tiles
-        for (int i = 0; i < tiles.size(); i += 1) {
+        for (int i = 0; i < sheet.size(); i += 1) {
             int x = i % columnCount;
             int y = i / columnCount;
             ImVec2 pos = {windowPos.x + x * tileSize - scrollX, windowPos.y + y * tileSize - scrollY};
             ImVec2 size = ImVec2(pos.x + tileSize, pos.y + tileSize);
 
-            auto textureHandle = reinterpret_cast<ImTextureID>(tiles.at(i).get<CAnimation>().animation.getSprite().
-                getTexture().getNativeHandle());
-
-            drawList->AddImage(textureHandle, pos, size);
+            auto textureHandle = reinterpret_cast<ImTextureID>(sheet.getNativeHandle());
+            auto uv = sheet.getUV(i);
+            drawList->AddImage(textureHandle, pos, size, uv.position, uv.position + uv.size);
         }
 
         // Draw grid
         {
-            const ImVec4 gridColor(0.678f, 0.678f, 0.678f, 1.0f);
+            constexpr ImVec4 gridColor(0.678f, 0.678f, 0.678f, 1.0f);
             ImU32 gridColorU32 = ImGui::ColorConvertFloat4ToU32(gridColor);
             float gridThickness = 1.0f;
 
@@ -630,7 +628,7 @@ void Scene_Zelda::renderAssetBrowser() {
 
         // Convert cursor position to local coordinates within the tilemap
         int tileIndex = -1;
-        ImVec2 cursorPos = ImGui:: GetMousePos();
+        ImVec2 cursorPos = ImGui::GetMousePos();
         ImVec2 localCursorPos = ImVec2(cursorPos.x - windowPos.x + scrollX, cursorPos.y - windowPos.y + scrollY);
         int tileIndexX = localCursorPos.x / tileSize;
         int tileIndexY = localCursorPos.y / tileSize;
@@ -638,18 +636,20 @@ void Scene_Zelda::renderAssetBrowser() {
             tileIndex = tileIndexX + tileIndexY * columnCount;
         }
 
-        if (tileIndex >= 0 && tileIndex < tiles.size() && ImGui::IsMouseHoveringRect(tilemapPos, ImVec2(tilemapPos.x + tilemapSize.x, tilemapPos.y + tilemapSize. y))) {
-            ImVec2 topCorner(tileIndexX * tileSize + windowPos.x - scrollX, tileIndexY * tileSize + windowPos.y - scrollY);
+        if (tileIndex >= 0 && tileIndex < sheet.size() &&
+            ImGui::IsMouseHoveringRect(tilemapPos, {tilemapPos.x + tilemapSize.x, tilemapPos.y + tilemapSize.y})) {
+            ImVec2 topCorner(tileIndexX * tileSize + windowPos.x - scrollX,
+                             tileIndexY * tileSize + windowPos.y - scrollY);
             ImVec2 bottomCorner(topCorner.x + tileSize, topCorner.y + tileSize);
             drawList->AddRect(
                 topCorner, bottomCorner,
                 IM_COL32(255, 255, 255, 255),
                 0.0f,
                 0,
-                4.0f
+                3.0f
             );
 
-            if (ImGui:: IsMouseClicked(ImGuiMouseButton_Left)) {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
                 // TODO: Set selected tile here
             }
         }

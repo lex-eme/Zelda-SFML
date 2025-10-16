@@ -1,9 +1,9 @@
 #include "Animation.h"
 
-sf::Texture Animation::s_defaultTexture;
+#include "GameEngine.h"
 
 Animation::Animation()
-    : m_sprite(s_defaultTexture) {
+    : m_sprite(GameEngine::s_defaultTexture) {
 }
 
 Animation::Animation(const std::string& name, const sf::Texture& t, const size_t frameCount, const size_t speed)

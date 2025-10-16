@@ -35,6 +35,7 @@ Texture       TexBlack        assets/textures/tloz/tile_black.png
 Texture       TexTektite      assets/textures/tloz/tektite.png
 Texture       TexKnight       assets/textures/tloz/knight.png
 Texture       TexHeart        assets/textures/tloz/item_heart.png
+Texture       TexEnv1         assets/textures/tloz/spritesheets/tilesheet.png
 Animation     Explosion       TexExplode          48  2
 Animation     RunDown         TexRunD             2   15
 Animation     RunRight        TexRunR             2   15
@@ -72,6 +73,7 @@ Animation     TreeBL          TexTreeBL           1   0
 Animation     TreeBR          TexTreeBR           1   0
 Animation     Bush            TexBush             1   0
 Animation     Heart           TexHeart            1   0
+SpriteSheet   Env1            TexEnv1             8   5
 Sound         Slash           assets/sounds/LOZ_Sword_Slash.wav
 Sound         LinkHurt        assets/sounds/LOZ_Link_Hurt.wav
 Sound         LinkDie         assets/sounds/LOZ_Link_Die.wav

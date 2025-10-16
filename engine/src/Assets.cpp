@@ -37,6 +37,16 @@ void Assets::loadFromFile(const std::string& path) {
             fin >> name >> soundPath;
 
             addSound(name, soundPath);
+        } else if (type == "SpriteSheet") {
+            std::string name;
+            std::string textureName;
+            unsigned int width, height;
+
+            fin >> name >> textureName >> width >> height;
+
+            const sf::Texture& texture = getTexture(textureName);
+            SpriteSheet spriteSheet(name, texture, width, height);
+            addSpriteSheet(name, spriteSheet);
         }
     }
 }
@@ -62,6 +72,15 @@ void Assets::addAnimation(const std::string& name, const Animation& anim) {
     }
 
     m_animations[name] = anim;
+}
+
+void Assets::addSpriteSheet(const std::string& name, const SpriteSheet& spriteSheet) {
+    if (m_spriteSheets.find(name) != m_spriteSheets.end()) {
+        std::cout << "Sprite sheet '" << name << "' already exists" << std::endl;
+        return;
+    }
+
+    m_spriteSheets[name] = spriteSheet;
 }
 
 void Assets::addSound(const std::string& name, const std::string& path) {
@@ -111,6 +130,16 @@ const Animation& Assets::getAnimation(const std::string& name) const {
     }
 
     std::cerr << "Trying to use unknown animation called " << name << std::endl;
+    exit(-1);
+}
+
+const SpriteSheet& Assets::getSpriteSheet(const std::string& name) const {
+    const auto it = m_spriteSheets.find(name);
+    if (it != m_spriteSheets.end()) {
+        return it->second;
+    }
+
+    std::cerr << "Trying to use unknown sprite sheet called " << name << std::endl;
     exit(-1);
 }
 
