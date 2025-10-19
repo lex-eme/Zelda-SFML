@@ -9,18 +9,19 @@ SpriteSheet::SpriteSheet()
     : m_tileSheet(GameEngine::s_defaultTexture) {
 }
 
-SpriteSheet::SpriteSheet(const std::string& name, const sf::Texture& texture, const unsigned int tilesPerRow,
-                         const unsigned int tilesPerColumn)
+SpriteSheet::SpriteSheet(const std::string& name, const sf::Texture& texture, const int tilesPerRow,
+                         const int tilesPerColumn)
     : m_tileSheet(texture), m_name(name) {
-    const sf::Vector2u texSize = texture.getSize();
-    const unsigned int tileWidth = texSize.x / tilesPerRow;
-    const unsigned int tileHeight = texSize.y / tilesPerColumn;
+    const sf::Vector2i texSize = sf::Vector2i(texture.getSize());
+    const int tileWidth = texSize.x / tilesPerRow;
+    const int tileHeight = texSize.y / tilesPerColumn;
     std::cout << "Tile width: " << texSize.x / tilesPerRow << ", height: " << texSize.y / tilesPerColumn << std::endl;
 
+    m_UV.reserve(tilesPerRow * tilesPerColumn);
     m_tiles.reserve(tilesPerRow * tilesPerColumn);
     for (int y = 0; y < tilesPerColumn; y += 1) {
         for (int x = 0; x < tilesPerRow; x += 1) {
-            m_tiles.push_back(sf::FloatRect(
+            m_UV.push_back(sf::FloatRect(
                 {
                     static_cast<float>(x * tileWidth) / static_cast<float>(texSize.x),
                     static_cast<float>(y * tileHeight) / static_cast<float>(texSize.y)
@@ -29,15 +30,20 @@ SpriteSheet::SpriteSheet(const std::string& name, const sf::Texture& texture, co
                     static_cast<float>(tileWidth) / static_cast<float>(texSize.x),
                     static_cast<float>(tileHeight) / static_cast<float>(texSize.y)
                 }));
+            m_tiles.push_back(sf::IntRect({x * tileWidth, y * tileHeight}, {tileWidth, tileHeight}));
         }
     }
 }
 
 size_t SpriteSheet::size() const {
-    return m_tiles.size();
+    return m_UV.size();
 }
 
-const sf::FloatRect& SpriteSheet::getUV(const int index) const {
+const sf::FloatRect& SpriteSheet::getUV(const size_t index) const {
+    return m_UV.at(index);
+}
+
+const sf::IntRect& SpriteSheet::getTile(const size_t index) const {
     return m_tiles.at(index);
 }
 

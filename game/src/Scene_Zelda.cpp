@@ -592,9 +592,9 @@ void Scene_Zelda::renderAssetBrowser() const {
                                 clearColorU32);
 
         // Render tiles
-        for (int i = 0; i < sheet.size(); i += 1) {
-            int x = i % columnCount;
-            int y = i / columnCount;
+        for (size_t i = 0; i < sheet.size(); i += 1) {
+            size_t x = i % columnCount;
+            size_t y = i / columnCount;
             ImVec2 pos = {windowPos.x + x * tileSize - scrollX, windowPos.y + y * tileSize - scrollY};
             ImVec2 size = ImVec2(pos.x + tileSize, pos.y + tileSize);
 
@@ -797,7 +797,7 @@ void Scene_Zelda::sDoAction(const Action& action) {
             action.name() == "PAUSE") { m_paused = !m_paused; } else if (action.name() == "QUIT") { onEnd(); } else if (
             action.name() == "UP") { input.up = true; } else if (action.name() == "DOWN") { input.down = true; } else if
             (action.name() == "LEFT") { input.left = true; } else if (action.name() == "RIGHT") { input.right = true; } else
-            if (action.name() == "ATTACK") { spawnSword(player()); spawnManyEntities(); }
+            if (action.name() == "ATTACK") { spawnSword(player()); }
     } else if (action.type() == "END") {
         if (action.name() == "UP") { input.up = false; } else if (
             action.name() == "DOWN") { input.down = false; } else if (

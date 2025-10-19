@@ -40,7 +40,7 @@ void Assets::loadFromFile(const std::string& path) {
         } else if (type == "SpriteSheet") {
             std::string name;
             std::string textureName;
-            unsigned int width, height;
+            int width, height;
 
             fin >> name >> textureName >> width >> height;
 
