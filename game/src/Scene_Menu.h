@@ -14,13 +14,12 @@ class Scene_Menu : public Scene {
 public:
     explicit Scene_Menu(GameEngine* gameEngine = nullptr);
 
-    void sRender() override;
-
 private:
     void init();
     void update(float deltaTime) override;
     void onEnd() override;
 
     // Systems
+    void sRender() override;
     void sDoAction(const Action& action) override;
 };

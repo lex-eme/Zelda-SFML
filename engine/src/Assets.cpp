@@ -45,8 +45,7 @@ void Assets::loadFromFile(const std::string& path) {
             fin >> name >> textureName >> width >> height;
 
             const sf::Texture& texture = getTexture(textureName);
-            SpriteSheet spriteSheet(name, texture, width, height);
-            addSpriteSheet(name, spriteSheet);
+            addSpriteSheet(name, texture, width, height);
         }
     }
 }
@@ -74,13 +73,13 @@ void Assets::addAnimation(const std::string& name, const Animation& anim) {
     m_animations[name] = anim;
 }
 
-void Assets::addSpriteSheet(const std::string& name, const SpriteSheet& spriteSheet) {
+void Assets::addSpriteSheet(const std::string& name, const sf::Texture& texture, int tilesPerRow, int tilesPerColumn) {
     if (m_spriteSheets.find(name) != m_spriteSheets.end()) {
         std::cout << "Sprite sheet '" << name << "' already exists" << std::endl;
         return;
     }
 
-    m_spriteSheets[name] = spriteSheet;
+    m_spriteSheets.emplace(name, SpriteSheet(name, texture, tilesPerRow, tilesPerColumn));
 }
 
 void Assets::addSound(const std::string& name, const std::string& path) {

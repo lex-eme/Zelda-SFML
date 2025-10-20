@@ -5,13 +5,9 @@
 #include "Animation.h"
 #include "GameEngine.h"
 
-SpriteSheet::SpriteSheet()
-    : m_tileSheet(GameEngine::s_defaultTexture) {
-}
-
 SpriteSheet::SpriteSheet(const std::string& name, const sf::Texture& texture, const int tilesPerRow,
                          const int tilesPerColumn)
-    : m_tileSheet(texture), m_name(name) {
+    : m_texture(texture), m_name(name) {
     const sf::Vector2i texSize = sf::Vector2i(texture.getSize());
     const int tileWidth = texSize.x / tilesPerRow;
     const int tileHeight = texSize.y / tilesPerColumn;
@@ -47,6 +43,10 @@ const sf::IntRect& SpriteSheet::getTile(const size_t index) const {
     return m_tiles.at(index);
 }
 
+const sf::Texture& SpriteSheet::getTexture() const {
+    return m_texture;
+}
+
 size_t SpriteSheet::getNativeHandle() const {
-    return m_tileSheet.getTexture().getNativeHandle();
+    return m_texture.getNativeHandle();
 }

@@ -52,5 +52,4 @@ private:
     void heartCollision();
     void resolveHeartCollision(Entity heart, Entity entity);
     void swordEnemyCollision();
-    void renderAssetBrowser() const;
 };

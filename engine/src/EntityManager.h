@@ -21,7 +21,7 @@ public:
 
     Entity addEntity(const std::string& tag);
 
-    const EntityVec& getEntities();
+    const EntityVec& getEntities() const;
     const EntityVec& getEntities(const std::string& tag);
     const std::map<std::string, EntityVec>& getEntityMap();
 

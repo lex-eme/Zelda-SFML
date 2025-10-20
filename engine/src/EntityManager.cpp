@@ -20,7 +20,7 @@ Entity EntityManager::addEntity(const std::string& tag) {
     return entity;
 }
 
-const EntityVec& EntityManager::getEntities() {
+const EntityVec& EntityManager::getEntities() const{
     return m_entities;
 }
 

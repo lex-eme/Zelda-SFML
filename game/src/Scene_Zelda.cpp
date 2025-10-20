@@ -516,9 +516,7 @@ static void entitiesTable(const EntityVec& entityVec) {
 }
 
 void Scene_Zelda::sGUI() {
-    renderAssetBrowser();
     ImGui::Begin("Scene Properties");
-    ImGui::GetCurrentContext();
     const ImGuiContext& g = *ImGui::GetCurrentContext();
     const ImGuiIO& io = g.IO;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -561,102 +559,6 @@ void Scene_Zelda::sGUI() {
 
         ImGui::EndTabBar();
     }
-
-    ImGui::End();
-}
-
-void Scene_Zelda::renderAssetBrowser() const {
-    ImGui::Begin("Asset Browser");
-
-    ImGui::BeginChild("Map"); {
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        ImVec2 windowPos = ImGui::GetWindowPos();
-        ImVec2 windowSize = ImGui::GetWindowSize();
-        float scrollX = ImGui::GetScrollX();
-        float scrollY = ImGui::GetScrollY();
-
-        // Make sure the tilemap renders inside the child window
-        drawList->PushClipRect(windowPos, ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y));
-
-        int columnCount = 8;
-        int tileSize = 50;
-        constexpr ImVec4 clearColor(0.392f, 0.584f, 0.929f, 1.0f);
-        ImU32 clearColorU32 = ImGui::ColorConvertFloat4ToU32(clearColor);
-        SpriteSheet sheet = m_game->assets().getSpriteSheet("Env1");
-        size_t rowCount = sheet.size() / columnCount + (sheet.size() % columnCount == 0 ? 0 : 1);
-
-        // Background color
-        ImVec2 tilemapPos = ImVec2(windowPos.x - scrollX, windowPos.y - scrollY);
-        ImVec2 tilemapSize = ImVec2(columnCount * tileSize, rowCount * tileSize);
-        drawList->AddRectFilled(tilemapPos, {tilemapPos.x + tilemapSize.x, tilemapPos.y + tilemapSize.y},
-                                clearColorU32);
-
-        // Render tiles
-        for (size_t i = 0; i < sheet.size(); i += 1) {
-            size_t x = i % columnCount;
-            size_t y = i / columnCount;
-            ImVec2 pos = {windowPos.x + x * tileSize - scrollX, windowPos.y + y * tileSize - scrollY};
-            ImVec2 size = ImVec2(pos.x + tileSize, pos.y + tileSize);
-
-            auto textureHandle = reinterpret_cast<ImTextureID>(sheet.getNativeHandle());
-            auto uv = sheet.getUV(i);
-            drawList->AddImage(textureHandle, pos, size, uv.position, uv.position + uv.size);
-        }
-
-        // Draw grid
-        {
-            constexpr ImVec4 gridColor(0.678f, 0.678f, 0.678f, 1.0f);
-            ImU32 gridColorU32 = ImGui::ColorConvertFloat4ToU32(gridColor);
-            float gridThickness = 1.0f;
-
-            // Vertical lines
-            for (int x = 0; x <= columnCount; x += 1) {
-                ImVec2 p1 = ImVec2(tilemapPos.x + x * tileSize, tilemapPos.y);
-                ImVec2 p2 = ImVec2(tilemapPos.x + x * tileSize, tilemapPos.y + tilemapSize.y);
-                drawList->AddLine(p1, p2, gridColorU32, gridThickness);
-            }
-
-            // Horizontal lines
-            for (int y = 0; y <= rowCount; y += 1) {
-                ImVec2 p1 = ImVec2(tilemapPos.x, tilemapPos.y + y * tileSize);
-                ImVec2 p2 = ImVec2(tilemapPos.x + tilemapSize.x, tilemapPos.y + y * tileSize);
-                drawList->AddLine(p1, p2, gridColorU32, gridThickness);
-            }
-        }
-
-        ImGui::Dummy(ImVec2(tileSize * columnCount, tileSize * rowCount));
-
-        // Convert cursor position to local coordinates within the tilemap
-        int tileIndex = -1;
-        ImVec2 cursorPos = ImGui::GetMousePos();
-        ImVec2 localCursorPos = ImVec2(cursorPos.x - windowPos.x + scrollX, cursorPos.y - windowPos.y + scrollY);
-        int tileIndexX = localCursorPos.x / tileSize;
-        int tileIndexY = localCursorPos.y / tileSize;
-        if (tileIndexX >= 0 && tileIndexY >= 0 && tileIndexX < 8 && tileIndexY < rowCount) {
-            tileIndex = tileIndexX + tileIndexY * columnCount;
-        }
-
-        if (tileIndex >= 0 && tileIndex < sheet.size() &&
-            ImGui::IsMouseHoveringRect(tilemapPos, {tilemapPos.x + tilemapSize.x, tilemapPos.y + tilemapSize.y})) {
-            ImVec2 topCorner(tileIndexX * tileSize + windowPos.x - scrollX,
-                             tileIndexY * tileSize + windowPos.y - scrollY);
-            ImVec2 bottomCorner(topCorner.x + tileSize, topCorner.y + tileSize);
-            drawList->AddRect(
-                topCorner, bottomCorner,
-                IM_COL32(255, 255, 255, 255),
-                0.0f,
-                0,
-                3.0f
-            );
-
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                // TODO: Set selected tile here
-            }
-        }
-
-        drawList->PopClipRect();
-    }
-    ImGui::EndChild();
 
     ImGui::End();
 }

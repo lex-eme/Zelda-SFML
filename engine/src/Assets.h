@@ -20,7 +20,7 @@ public:
 
     void addTexture(const std::string& name, const std::string& path);
     void addAnimation(const std::string& name, const Animation& anim);
-    void addSpriteSheet(const std::string& name, const SpriteSheet& spriteSheet);
+    void addSpriteSheet(const std::string& name, const sf::Texture& texture, int tilesPerRow, int tilesPerColumn);
     void addSound(const std::string& name, const std::string& path);
     void addFont(const std::string& name, const std::string& path);
 

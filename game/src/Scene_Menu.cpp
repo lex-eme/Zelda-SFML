@@ -2,6 +2,7 @@
 
 #include "GameEngine.h"
 #include "Scene_Zelda.h"
+#include "TileMapEditor.h"
 
 Scene_Menu::Scene_Menu(GameEngine* gameEngine)
     : Scene(gameEngine), m_menuText(gameEngine->assets().getFont("Megaman")) {
@@ -25,6 +26,7 @@ void Scene_Menu::init() {
     registerAction(sf::Keyboard::Key::D, "PLAY");
     registerAction(sf::Keyboard::Key::Q, "QUIT");
     registerAction(sf::Keyboard::Key::Escape, "QUIT");
+    registerAction(sf::Keyboard::Key::E, "EDITOR");
 
     m_menuStrings.emplace_back("Level  1");
     m_levelPaths.emplace_back("assets/levels/level1.txt");
@@ -51,6 +53,8 @@ void Scene_Menu::sDoAction(const Action& action) {
             m_game->changeScene("PLAY", std::make_shared<Scene_Zelda>(m_game, m_levelPaths[m_menuIndex]));
         } else if (action.name() == "QUIT") {
             onEnd();
+        } else if (action.name() == "EDITOR") {
+            m_game->changeScene("EDITOR", std::make_shared<TileMapEditor>(m_game));
         }
     }
 }
