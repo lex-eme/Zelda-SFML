@@ -21,9 +21,8 @@ void TileMapEditor::sRender() {
     if (m_selectedTile > 0) {
         const auto gridPos = getMouseGridPosition();
 
-        if (!(gridPos.x < 0.0f && gridPos.x > m_width * m_tileSize && gridPos.y < 0.0f && gridPos.y > m_height *
-              m_tileSize)) {
-            m_tilePreview.setPosition(gridPos);
+        if (!(gridPos.x < 0.0f || gridPos.x >= m_width || gridPos.y < 0.0f || gridPos.y >= m_height)) {
+            m_tilePreview.setPosition(gridPos * m_tileSize);
             window.draw(m_tilePreview);
         }
     }
@@ -40,6 +39,7 @@ void TileMapEditor::init() {
     registerAction(sf::Keyboard::Key::S, "DOWN");
     registerAction(sf::Keyboard::Key::D, "RIGHT");
     registerAction(sf::Keyboard::Key::Space, "PLACE");
+    registerAction(sf::Keyboard::Key::X, "REMOVE");
 
     createGridVertexArray();
 
@@ -47,6 +47,7 @@ void TileMapEditor::init() {
     float scale = m_tileSize / m_spriteSheet.getTile(0).size.x;
     m_tilePreview.setScale({scale, scale});
     m_game->window().setVerticalSyncEnabled(true);
+    m_indexVec.resize(m_width * m_height);
 }
 
 void TileMapEditor::update(float deltaTime) {
@@ -79,7 +80,14 @@ void TileMapEditor::sDoAction(const Action& action) {
         } else if (action.name() == "RIGHT") {
             moveMap({1.0f, 0.0f});
         } else if (action.name() == "PLACE") {
-            placeTile(getMouseGridPosition());
+            if (m_selectedTile != 0) {
+                const auto pos = getMouseGridPosition();
+                const auto gridPos = getMouseGridPosition();
+                placeTile(pos, gridPos);
+            }
+        } else if (action.name() == "REMOVE") {
+            auto pos = getMouseGridPosition();
+            removeTile(pos);
         }
     }
 }
@@ -117,26 +125,53 @@ sf::Vector2f TileMapEditor::getMouseGridPosition() const {
     const sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
     const sf::Vector2f gridPos = sf::Vector2f(static_cast<int>(worldPos.x) / static_cast<int>(m_tileSize),
                                               static_cast<int>(worldPos.y) / static_cast<int>(m_tileSize));
-    return gridPos * m_tileSize;
+    return gridPos;
 }
 
-void TileMapEditor::placeTile(sf::Vector2f pos) {
-    const auto uv = sf::FloatRect(m_spriteSheet.getTile(m_selectedTile - 1));
-    const auto size = m_map.getVertexCount();
-    m_map.resize(size + 6);
-    m_map[size + 0].position = {pos.x, pos.y};
-    m_map[size + 1].position = {pos.x + m_tileSize, pos.y};
-    m_map[size + 2].position = {pos.x, pos.y + m_tileSize};
-    m_map[size + 3].position = {pos.x, pos.y + m_tileSize};
-    m_map[size + 4].position = {pos.x + m_tileSize, pos.y + m_tileSize};
-    m_map[size + 5].position = {pos.x + m_tileSize, pos.y};
+sf::Vector2f TileMapEditor::getMouseWorldPosition() const {
+    return getMouseGridPosition() * m_tileSize;
+}
 
-    m_map[size + 0].texCoords = {uv.position.x, uv.position.y};
-    m_map[size + 1].texCoords = {uv.position.x + uv.size.x, uv.position.y};
-    m_map[size + 2].texCoords = {uv.position.x, uv.position.y + uv.size.y};
-    m_map[size + 3].texCoords = {uv.position.x, uv.position.y + uv.size.y};
-    m_map[size + 4].texCoords = {uv.position.x + uv.size.x, uv.position.y + uv.size.y};
-    m_map[size + 5].texCoords = {uv.position.x + uv.size.x, uv.position.y};
+void TileMapEditor::placeTile(const sf::Vector2f& pos, const sf::Vector2f& gridPos) {
+    size_t index;
+    if (m_indexVec[gridPos.x + gridPos.y * m_width].isUsed) {
+        std::cout << "Replace vertices." << std::endl;
+        index = m_indexVec[gridPos.x + gridPos.y * m_width].index;
+    } else {
+        index = m_map.getVertexCount();
+        m_map.resize(m_map.getVertexCount() + 6);
+        m_indexVec[gridPos.x + gridPos.y * m_width] = {true, index};
+    }
+
+    const auto uv = sf::FloatRect(m_spriteSheet.getTile(m_selectedTile - 1));
+    m_map[index + 0].position = {pos.x, pos.y};
+    m_map[index + 1].position = {pos.x + m_tileSize, pos.y};
+    m_map[index + 2].position = {pos.x, pos.y + m_tileSize};
+    m_map[index + 3].position = {pos.x, pos.y + m_tileSize};
+    m_map[index + 4].position = {pos.x + m_tileSize, pos.y + m_tileSize};
+    m_map[index + 5].position = {pos.x + m_tileSize, pos.y};
+
+    m_map[index + 0].texCoords = {uv.position.x, uv.position.y};
+    m_map[index + 1].texCoords = {uv.position.x + uv.size.x, uv.position.y};
+    m_map[index + 2].texCoords = {uv.position.x, uv.position.y + uv.size.y};
+    m_map[index + 3].texCoords = {uv.position.x, uv.position.y + uv.size.y};
+    m_map[index + 4].texCoords = {uv.position.x + uv.size.x, uv.position.y + uv.size.y};
+    m_map[index + 5].texCoords = {uv.position.x + uv.size.x, uv.position.y};
+}
+
+void TileMapEditor::removeTile(const sf::Vector2f& pos) {
+    if (!m_indexVec[pos.x + pos.y * m_width].isUsed) {
+        return;
+    }
+
+    size_t index = m_indexVec[pos.x + pos.y * m_width].index;
+    m_map[index + 0].position = {0.0f, 0.0f};
+    m_map[index + 1].position = {0.0f, 0.0f};
+    m_map[index + 2].position = {0.0f, 0.0f};
+    m_map[index + 3].position = {0.0f, 0.0f};
+    m_map[index + 4].position = {0.0f, 0.0f};
+    m_map[index + 5].position = {0.0f, 0.0f};
+    m_indexVec[pos.x + pos.y * m_width].isUsed = false;
 }
 
 void TileMapEditor::zoom(const bool in) const {

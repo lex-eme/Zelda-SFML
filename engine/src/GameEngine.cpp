@@ -118,7 +118,7 @@ void GameEngine::sUserInput() {
         if (event->is<sf::Event::Closed>()) {
             quit();
         } else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::X) {
+            if (keyPressed->code == sf::Keyboard::Key::M) {
                 std::cout << "trying to save screenshot to " << "test.png" << std::endl;
                 sf::Texture texture(m_window.getSize());
                 texture.update(m_window);
