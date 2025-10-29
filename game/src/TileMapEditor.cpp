@@ -1,5 +1,6 @@
 #include "TileMapEditor.h"
 
+#include <fstream>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include "imgui-SFML.h"
@@ -14,10 +15,12 @@ void TileMapEditor::sRender() {
     auto& window = m_game->window();
     window.clear(sf::Color(150, 150, 150));
 
+    if (m_showGrid) {
+        window.draw(m_grid);
+    }
     sf::RenderStates states;
     states.texture = &m_texture;
     window.draw(m_map, states);
-    window.draw(m_grid);
     if (m_selectedTile > 0) {
         const auto gridPos = getMouseGridPosition();
 
@@ -47,7 +50,9 @@ void TileMapEditor::init() {
     float scale = m_tileSize / m_spriteSheet.getTile(0).size.x;
     m_tilePreview.setScale({scale, scale});
     m_game->window().setVerticalSyncEnabled(true);
-    m_indexVec.resize(m_width * m_height);
+    m_editorMapEntries.resize(m_width * m_height);
+
+    importMap();
 }
 
 void TileMapEditor::update(float deltaTime) {
@@ -81,7 +86,7 @@ void TileMapEditor::sDoAction(const Action& action) {
             moveMap({1.0f, 0.0f});
         } else if (action.name() == "PLACE") {
             if (m_selectedTile != 0) {
-                const auto pos = getMouseGridPosition();
+                const auto pos = getMouseWorldPosition();
                 const auto gridPos = getMouseGridPosition();
                 placeTile(pos, gridPos);
             }
@@ -93,7 +98,16 @@ void TileMapEditor::sDoAction(const Action& action) {
 }
 
 void TileMapEditor::sGUI() {
+    ImGui::Begin("Asset Browser");
+    const ImGuiContext& g = *ImGui::GetCurrentContext();
+    const ImGuiIO& io = g.IO;
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::Checkbox("Draw Grid", &m_showGrid);
+    if (ImGui::Button("Export")) {
+        exportMap();
+    }
     renderAssetBrowser();
+    ImGui::End();
 }
 
 void TileMapEditor::createGridVertexArray() {
@@ -119,6 +133,82 @@ void TileMapEditor::createGridVertexArray() {
     }
 }
 
+void TileMapEditor::exportMap() const {
+    std::ofstream file("./assets/map/mymap.txt", std::ios::out);
+
+    file << "Map\n";
+    file << "c " << m_width << " " << m_height << " " << m_tileSize << " " << m_tileCount << "\n";
+    file << "n " << m_spriteSheet.getName() << "\n";
+
+    for (int i = 0; i < m_editorMapEntries.size(); i += 1) {
+        if (m_editorMapEntries[i].isUsed) {
+            file << "t " << i % m_width << " " << i / m_width << " " << m_editorMapEntries[i].spriteSheetIndex << "\n";
+        }
+    }
+    file << "EndMap" << std::endl;
+}
+
+void TileMapEditor::importMap() {
+    std::ifstream fin("./assets/map/mymap.txt");
+    std::string type;
+
+    fin >> type;
+    if (type != "Map") {
+        std::cerr << "Expected 'Map', found '" << type << "'." << std::endl;
+        return;
+    }
+
+    size_t index = 0;
+    fin >> type;
+    if (type != "c") {
+        std::cerr << "Expected 'c', found '" << type << "'." << std::endl;
+        return;
+    }
+
+    fin >> m_width >> m_height >> m_tileSize >> m_tileCount >> type;
+    m_map.resize(m_tileCount * 6);
+    if (type != "n") {
+        std::cerr << "Expected 'n', found '" << type << "'." << std::endl;
+        return;
+    } {
+        std::string name;
+        fin >> name;
+        std::cout << "Sprite sheet: " << name << std::endl;
+    }
+    fin >> type;
+    while (type == "t") {
+        int x, y;
+        size_t sheetIndex;
+        fin >> x >> y >> sheetIndex;
+        m_editorMapEntries[x + y * m_width] = {true, index, sheetIndex};
+
+        sf::Vector2f pos = sf::Vector2f(x * m_tileSize, y * m_tileSize);
+        const auto uv = sf::FloatRect(m_spriteSheet.getTile(sheetIndex));
+        m_map[index + 0].position = {pos.x, pos.y};
+        m_map[index + 1].position = {pos.x + m_tileSize, pos.y};
+        m_map[index + 2].position = {pos.x, pos.y + m_tileSize};
+        m_map[index + 3].position = {pos.x, pos.y + m_tileSize};
+        m_map[index + 4].position = {pos.x + m_tileSize, pos.y + m_tileSize};
+        m_map[index + 5].position = {pos.x + m_tileSize, pos.y};
+
+        m_map[index + 0].texCoords = {uv.position.x, uv.position.y};
+        m_map[index + 1].texCoords = {uv.position.x + uv.size.x, uv.position.y};
+        m_map[index + 2].texCoords = {uv.position.x, uv.position.y + uv.size.y};
+        m_map[index + 3].texCoords = {uv.position.x, uv.position.y + uv.size.y};
+        m_map[index + 4].texCoords = {uv.position.x + uv.size.x, uv.position.y + uv.size.y};
+        m_map[index + 5].texCoords = {uv.position.x + uv.size.x, uv.position.y};
+        index += 6;
+        fin >> type;
+    }
+
+    if (type != "EndMap") {
+        std::cerr << "Expected 'EndMap', found '" << type << "'." << std::endl;
+        return;
+    }
+
+    std::cout << "Imported indices:" << index << std::endl;
+}
+
 sf::Vector2f TileMapEditor::getMouseGridPosition() const {
     const auto& window = m_game->window();
     const sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
@@ -134,13 +224,15 @@ sf::Vector2f TileMapEditor::getMouseWorldPosition() const {
 
 void TileMapEditor::placeTile(const sf::Vector2f& pos, const sf::Vector2f& gridPos) {
     size_t index;
-    if (m_indexVec[gridPos.x + gridPos.y * m_width].isUsed) {
+    if (m_editorMapEntries[gridPos.x + gridPos.y * m_width].isUsed) {
         std::cout << "Replace vertices." << std::endl;
-        index = m_indexVec[gridPos.x + gridPos.y * m_width].index;
+        index = m_editorMapEntries[gridPos.x + gridPos.y * m_width].vertexArrayIndex;
+        m_editorMapEntries[gridPos.x + gridPos.y * m_width].spriteSheetIndex = m_selectedTile - 1;
     } else {
         index = m_map.getVertexCount();
         m_map.resize(m_map.getVertexCount() + 6);
-        m_indexVec[gridPos.x + gridPos.y * m_width] = {true, index};
+        m_editorMapEntries[gridPos.x + gridPos.y * m_width] = {true, index, m_selectedTile - 1};
+        m_tileCount += 1;
     }
 
     const auto uv = sf::FloatRect(m_spriteSheet.getTile(m_selectedTile - 1));
@@ -160,18 +252,19 @@ void TileMapEditor::placeTile(const sf::Vector2f& pos, const sf::Vector2f& gridP
 }
 
 void TileMapEditor::removeTile(const sf::Vector2f& pos) {
-    if (!m_indexVec[pos.x + pos.y * m_width].isUsed) {
+    if (!m_editorMapEntries[pos.x + pos.y * m_width].isUsed) {
         return;
     }
 
-    size_t index = m_indexVec[pos.x + pos.y * m_width].index;
+    const size_t index = m_editorMapEntries[pos.x + pos.y * m_width].vertexArrayIndex;
     m_map[index + 0].position = {0.0f, 0.0f};
     m_map[index + 1].position = {0.0f, 0.0f};
     m_map[index + 2].position = {0.0f, 0.0f};
     m_map[index + 3].position = {0.0f, 0.0f};
     m_map[index + 4].position = {0.0f, 0.0f};
     m_map[index + 5].position = {0.0f, 0.0f};
-    m_indexVec[pos.x + pos.y * m_width].isUsed = false;
+    m_editorMapEntries[pos.x + pos.y * m_width].isUsed = false;
+    m_tileCount -= 1;
 }
 
 void TileMapEditor::zoom(const bool in) const {
@@ -195,14 +288,7 @@ void TileMapEditor::moveMap(const sf::Vector2f direction) const {
 }
 
 void TileMapEditor::renderAssetBrowser() {
-    ImGui::Begin("Asset Browser");
-
-    const ImGuiContext& g = *ImGui::GetCurrentContext();
-    const ImGuiIO& io = g.IO;
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-    ImGui::Text("Entity count: %zu", m_entityManager.getEntities().size());
-
-    ImGui::BeginChild("Map"); {
+    ImGui::BeginChild("Sprite sheet"); {
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         ImVec2 windowPos = ImGui::GetWindowPos();
         ImVec2 windowSize = ImGui::GetWindowSize();
@@ -298,6 +384,4 @@ void TileMapEditor::renderAssetBrowser() {
         drawList->PopClipRect();
     }
     ImGui::EndChild();
-
-    ImGui::End();
 }

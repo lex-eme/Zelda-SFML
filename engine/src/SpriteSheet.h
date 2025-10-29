@@ -12,6 +12,7 @@ public:
     SpriteSheet(const std::string& name, const sf::Texture& texture, int tilesPerRow, int tilesPerColumn);
 
     [[nodiscard]] size_t size() const;
+    [[nodiscard]] const std::string& getName() const;
     [[nodiscard]] const sf::FloatRect& getUV(size_t index) const;
     [[nodiscard]] const sf::IntRect& getTile(size_t index) const;
     [[nodiscard]] const sf::Texture& getTexture() const;

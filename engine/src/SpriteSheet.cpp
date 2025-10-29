@@ -35,6 +35,10 @@ size_t SpriteSheet::size() const {
     return m_UV.size();
 }
 
+const std::string& SpriteSheet::getName() const {
+    return m_name;
+}
+
 const sf::FloatRect& SpriteSheet::getUV(const size_t index) const {
     return m_UV.at(index);
 }

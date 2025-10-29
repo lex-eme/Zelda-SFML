@@ -3,9 +3,10 @@
 
 #include "Scene.h"
 
-struct VertexIndex {
+struct EditorMapEntry {
     bool isUsed = false;
-    size_t index = 0;
+    size_t vertexArrayIndex = 0;
+    size_t spriteSheetIndex = 0;
 };
 
 class TileMapEditor : public Scene {
@@ -14,11 +15,13 @@ class TileMapEditor : public Scene {
     size_t m_selectedTile = 0;
     sf::VertexArray m_grid;
     sf::VertexArray m_map = sf::VertexArray(sf::PrimitiveType::Triangles);
-    std::vector<VertexIndex> m_indexVec;
+    std::vector<EditorMapEntry> m_editorMapEntries;
+    size_t m_tileCount = 0;
     SpriteSheet m_spriteSheet;
     const sf::Texture m_texture;
     sf::Sprite m_tilePreview;
     float m_tileSize = 32.0f;
+    bool m_showGrid = true;
 
 public:
     explicit TileMapEditor(GameEngine* gameEngine = nullptr);
@@ -33,6 +36,8 @@ private:
     void sGUI();
 
     void createGridVertexArray();
+    void exportMap() const;
+    void importMap();
     sf::Vector2f getMouseGridPosition() const;
     sf::Vector2f getMouseWorldPosition() const;
     void placeTile(const sf::Vector2f& pos, const sf::Vector2f& gridPos);
