@@ -1,6 +1,7 @@
 #pragma once
 #include "GameEngine.h"
 
+#include "Map.h"
 #include "Scene.h"
 
 struct EditorMapEntry {
@@ -10,17 +11,13 @@ struct EditorMapEntry {
 };
 
 class TileMapEditor : public Scene {
-    size_t m_width = 64;
-    size_t m_height = 64;
+    Map m_mapClass;
     size_t m_selectedTile = 0;
     sf::VertexArray m_grid;
-    sf::VertexArray m_map = sf::VertexArray(sf::PrimitiveType::Triangles);
     std::vector<EditorMapEntry> m_editorMapEntries;
     size_t m_tileCount = 0;
     SpriteSheet m_spriteSheet;
-    const sf::Texture m_texture;
     sf::Sprite m_tilePreview;
-    float m_tileSize = 32.0f;
     bool m_showGrid = true;
 
 public:
@@ -45,4 +42,12 @@ private:
     void zoom(bool in) const;
     void moveMap(sf::Vector2f direction) const;
     void renderAssetBrowser();
+
+    size_t& mapWidth() { return m_mapClass.width(); }
+    size_t& mapHeight() { return m_mapClass.height(); }
+    float& mapTileSize() { return m_mapClass.tileSize(); }
+
+    [[nodiscard]] const size_t& mapWidth() const { return m_mapClass.width(); }
+    [[nodiscard]] const size_t& mapHeight() const { return m_mapClass.height(); }
+    [[nodiscard]] const float& mapTileSize() const { return m_mapClass.tileSize(); }
 };

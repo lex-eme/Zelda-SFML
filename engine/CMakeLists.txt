@@ -22,6 +22,8 @@ set(SOURCES
         src/Scene.h
         src/SpriteSheet.cpp
         src/SpriteSheet.h
+        src/Map.cpp
+        src/Map.h
 )
 
 add_library(Engine STATIC)
