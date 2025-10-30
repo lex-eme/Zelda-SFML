@@ -102,6 +102,13 @@ void TileMapEditor::sGUI() {
     if (ImGui::Button("Export")) {
         exportMap();
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Export png")) {
+        const auto texture = m_mapClass.copyTexture();
+        if (texture.copyToImage().saveToFile("newspritesheet.png")) {
+            std::cout << "Map exported to " << "newspritesheet.png" << std::endl;
+        }
+    }
     renderAssetBrowser();
     ImGui::End();
 }
@@ -109,10 +116,11 @@ void TileMapEditor::sGUI() {
 void TileMapEditor::createGridVertexArray() {
     const size_t vertexCount = (mapWidth() + 1) * 2 + (mapHeight() + 1) * 2;
     m_grid = sf::VertexArray(sf::PrimitiveType::Lines, vertexCount);
-    constexpr auto color = sf::Color::White;
 
+    auto color = sf::Color::White;
     size_t index = 0;
     for (size_t col = 0; col <= mapWidth(); col += 1) {
+        color = col % 20 == 0 ? sf::Color::Black : sf::Color::White;
         m_grid[index].position = {col * mapTileSize(), 0.0f};
         m_grid[index].color = color;
         m_grid[index + 1].position = {col * mapTileSize(), mapHeight() * mapTileSize()};
@@ -121,6 +129,7 @@ void TileMapEditor::createGridVertexArray() {
     }
 
     for (size_t row = 0; row <= mapHeight(); row += 1) {
+        color = row % 12 == 0 ? sf::Color::Black : sf::Color::White;
         m_grid[index].position = {0.0f, row * mapTileSize()};
         m_grid[index].color = color;
         m_grid[index + 1].position = {mapWidth() * mapTileSize(), row * mapTileSize()};
@@ -155,7 +164,6 @@ void TileMapEditor::importMap() {
         return;
     }
 
-    size_t index = 0;
     fin >> type;
     if (type != "c") {
         std::cerr << "Expected 'c', found '" << type << "'." << std::endl;
@@ -173,6 +181,7 @@ void TileMapEditor::importMap() {
         m_editorMapEntries.resize(mapWidth() * mapHeight());
     }
     fin >> type;
+    size_t index = 0;
     while (type == "t") {
         int x, y;
         size_t sheetIndex;
@@ -266,7 +275,7 @@ void TileMapEditor::renderAssetBrowser() {
         // Make sure the tilemap renders inside the child window
         drawList->PushClipRect(windowPos, ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y));
 
-        int columnCount = 16;
+        int columnCount = 7;
         int tileSize = 32;
         constexpr ImVec4 clearColor(0.392f, 0.584f, 0.929f, 1.0f);
         ImU32 clearColorU32 = ImGui::ColorConvertFloat4ToU32(clearColor);

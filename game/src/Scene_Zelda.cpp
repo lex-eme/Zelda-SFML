@@ -62,12 +62,14 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
 
             auto e = m_entityManager.addEntity(type);
 
-            auto& anim = m_game->assets().getAnimation(name);
-            e.add<CAnimation>(anim, true);
+            if (name == "Heart") {
+                auto& anim = m_game->assets().getAnimation(name);
+                e.add<CAnimation>(anim, true);
+            }
             Vec2 pos = getPosition(RX, RY, TX, TY);
             e.add<CTransform>(pos);
             e.add<CPrevPosition>(pos);
-            e.add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
+            e.add<CBoundingBox>(m_gridSize, BM == 1, BV == 1);
         } else if (type == "NPC") {
             std::string name, AI;
             int RX, RY, TX, TY, BM, BV, H, D;
@@ -104,6 +106,18 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
         } else if (type == "Player") {
             fin >> m_playerConfig.X >> m_playerConfig.Y >> m_playerConfig.CX
                     >> m_playerConfig.CY >> m_playerConfig.SPEED >> m_playerConfig.HEALTH;
+        } else if (type == "World") {
+            std::string name;
+            int RX, RY, TX, TY, BM, BV;
+            fin >> name >> RX >> RY >> TX >> TY >> BM >> BV;
+
+            auto e = m_entityManager.addEntity(type);
+
+            auto& anim = m_game->assets().getAnimation(name);
+            e.add<CAnimation>(anim, true);
+            Vec2 pos = getPosition(RX, RY, TX, TY);
+            e.add<CTransform>(pos);
+            e.add<CPrevPosition>(pos);
         }
     }
 

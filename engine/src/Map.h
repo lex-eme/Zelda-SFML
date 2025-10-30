@@ -19,6 +19,8 @@ public:
     void setVertexCount(size_t size);
     [[nodiscard]] size_t getVertexCount() const;
 
+    [[nodiscard]] sf::Texture copyTexture() const;
+
     [[nodiscard]] size_t& width() { return m_width; }
     [[nodiscard]] size_t& height() { return m_heigh; }
     [[nodiscard]] float& tileSize() { return m_tileSize; }

@@ -19,6 +19,7 @@ public:
     void loadFromFile(const std::string& path);
 
     void addTexture(const std::string& name, const std::string& path);
+    void addTexture(const std::string& name, const sf::Texture& texture);
     void addAnimation(const std::string& name, const Animation& anim);
     void addSpriteSheet(const std::string& name, const sf::Texture& texture, int tilesPerRow, int tilesPerColumn);
     void addSound(const std::string& name, const std::string& path);

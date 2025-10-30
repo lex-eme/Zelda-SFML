@@ -41,3 +41,13 @@ void Map::setVertexCount(const size_t size) {
 size_t Map::getVertexCount() const {
     return m_vertices.getVertexCount();
 }
+
+sf::Texture Map::copyTexture() const {
+    auto size = sf::Vector2u(m_width * m_tileSize, m_heigh * m_tileSize);
+    sf::RenderTexture rt(size);
+    sf::RenderStates states;
+    states.texture = m_texture;
+    rt.draw(m_vertices, states);
+    rt.display();
+    return rt.getTexture();
+}

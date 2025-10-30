@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "Map.h"
+
 void Assets::loadFromFile(const std::string& path) {
     std::ifstream fin(path);
     std::string type;
@@ -46,6 +48,62 @@ void Assets::loadFromFile(const std::string& path) {
 
             const sf::Texture& texture = getTexture(textureName);
             addSpriteSheet(name, texture, width, height);
+        } else if (type == "World") {
+            std::string spriteSheetName;
+            std::string outputTexName;
+            std::string mapPath;
+
+            fin >> spriteSheetName >> outputTexName >> mapPath;
+
+            std::ifstream mapFin("./assets/map/mymap.txt");
+            std::string mapType;
+
+            mapFin >> mapType;
+            if (mapType != "Map") {
+                std::cerr << "Expected 'Map', found '" << mapType << "'." << std::endl;
+                return;
+            }
+
+            mapFin >> mapType;
+            if (mapType != "c") {
+                std::cerr << "Expected 'c', found '" << mapType << "'." << std::endl;
+                return;
+            }
+            size_t width, height, tileCount;
+            float tileSize;
+            mapFin >> width >> height >> tileSize >> tileCount >> mapType;
+            if (mapType != "n") {
+                std::cerr << "Expected 'n', found '" << mapType << "'." << std::endl;
+                return;
+            }
+            std::string name;
+            mapFin >> name;
+            const SpriteSheet& spriteSheet = getSpriteSheet(spriteSheetName);
+            Map map(width, height, &spriteSheet.getTexture(), tileSize);
+            map.setVertexCount(tileCount * 6);
+            mapFin >> mapType;
+            size_t index = 0;
+            while (mapType == "t") {
+                int x, y;
+                size_t sheetIndex;
+                mapFin >> x >> y >> sheetIndex;
+
+                sf::Vector2f pos = sf::Vector2f(x * tileSize, y * tileSize);
+                const auto uv = sf::FloatRect(spriteSheet.getTile(sheetIndex));
+                map.addTile(index, pos, uv);
+                index += 6;
+                mapFin >> mapType;
+            }
+
+            if (mapType != "EndMap") {
+                std::cerr << "Expected 'EndMap', found '" << mapType << "'." << std::endl;
+                return;
+            }
+
+            std::cout << "Imported indices:" << index << std::endl;
+
+            auto tex = map.copyTexture();
+            addTexture(outputTexName, tex);
         }
     }
 }
@@ -62,6 +120,10 @@ void Assets::addTexture(const std::string& name, const std::string& path) {
     } else {
         std::cout << "Loaded Texture '" << name << "' from path '" << path << "'" << std::endl;
     }
+}
+
+void Assets::addTexture(const std::string& name, const sf::Texture& texture) {
+    m_textures.emplace(name, texture);
 }
 
 void Assets::addAnimation(const std::string& name, const Animation& anim) {
