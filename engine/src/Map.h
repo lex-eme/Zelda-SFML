@@ -5,6 +5,7 @@ class Map final : public sf::Drawable {
     size_t m_width = 0;
     size_t m_heigh = 0;
     sf::VertexArray m_vertices = sf::VertexArray(sf::PrimitiveType::Triangles);
+    sf::Transform m_transform;
     const sf::Texture* m_texture = nullptr;
     float m_tileSize = 0.0f;
 

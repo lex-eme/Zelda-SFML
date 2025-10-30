@@ -33,8 +33,6 @@ Animation     SwordRight      TexSwordR           1   0
 Animation     Bush            TexBush             1   0
 Animation     Heart           TexHeart            1   0
 SpriteSheet   Env1            TexEnv1             7   4
-World         Env1            TexWorld            assets/map/mymap.txt
-Animation     Background      TexWorld            1   0
 Sound         Slash           assets/sounds/LOZ_Sword_Slash.wav
 Sound         LinkHurt        assets/sounds/LOZ_Link_Hurt.wav
 Sound         LinkDie         assets/sounds/LOZ_Link_Die.wav

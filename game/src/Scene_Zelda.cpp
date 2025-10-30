@@ -9,7 +9,7 @@
 #include <imgui_internal.h>
 
 Scene_Zelda::Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath)
-    : Scene(gameEngine), m_levelPath(levelPath), m_gridText(gameEngine->assets().getFont("Megaman")) {
+    : Scene(gameEngine), m_gridText(gameEngine->assets().getFont("Megaman")) {
     init(levelPath);
 }
 
@@ -31,6 +31,53 @@ void Scene_Zelda::update(float deltaTime) {
 
 void Scene_Zelda::init(const std::string& levelPath) {
     loadLevel(levelPath);
+
+    std::ifstream mapFin("./assets/map/mymap.txt");
+    std::string mapType;
+
+    mapFin >> mapType;
+    if (mapType != "Map") {
+        std::cerr << "Expected 'Map', found '" << mapType << "'." << std::endl;
+        return;
+    }
+
+    mapFin >> mapType;
+    if (mapType != "c") {
+        std::cerr << "Expected 'c', found '" << mapType << "'." << std::endl;
+        return;
+    }
+    size_t width, height, tileCount;
+    float tileSize;
+    mapFin >> width >> height >> tileSize >> tileCount >> mapType;
+    if (mapType != "n") {
+        std::cerr << "Expected 'n', found '" << mapType << "'." << std::endl;
+        return;
+    }
+    std::string name;
+    mapFin >> name;
+    const SpriteSheet& spriteSheet = m_game->assets().getSpriteSheet(name);
+    m_map = Map(width, height, &spriteSheet.getTexture(), tileSize);
+    m_map.setVertexCount(tileCount * 6);
+    mapFin >> mapType;
+    size_t index = 0;
+    while (mapType == "t") {
+        int x, y;
+        size_t sheetIndex;
+        mapFin >> x >> y >> sheetIndex;
+
+        sf::Vector2f pos = sf::Vector2f(x * tileSize, y * tileSize);
+        const auto uv = sf::FloatRect(spriteSheet.getTile(sheetIndex));
+        m_map.addTile(index, pos, uv);
+        index += 6;
+        mapFin >> mapType;
+    }
+
+    if (mapType != "EndMap") {
+        std::cerr << "Expected 'EndMap', found '" << mapType << "'." << std::endl;
+        return;
+    }
+
+    std::cout << "Imported indices:" << index << std::endl;
 
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Mario"));
@@ -106,18 +153,6 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
         } else if (type == "Player") {
             fin >> m_playerConfig.X >> m_playerConfig.Y >> m_playerConfig.CX
                     >> m_playerConfig.CY >> m_playerConfig.SPEED >> m_playerConfig.HEALTH;
-        } else if (type == "World") {
-            std::string name;
-            int RX, RY, TX, TY, BM, BV;
-            fin >> name >> RX >> RY >> TX >> TY >> BM >> BV;
-
-            auto e = m_entityManager.addEntity(type);
-
-            auto& anim = m_game->assets().getAnimation(name);
-            e.add<CAnimation>(anim, true);
-            Vec2 pos = getPosition(RX, RY, TX, TY);
-            e.add<CTransform>(pos);
-            e.add<CPrevPosition>(pos);
         }
     }
 
@@ -228,7 +263,6 @@ void Scene_Zelda::moveEntities(const std::string& tag) {
 
 void Scene_Zelda::sMovement() {
     const auto& input = player().get<CInput>();
-    auto& transform = player().get<CTransform>();
     auto& velocity = player().get<CVelocity>();
     auto& state = player().get<CState>();
 
@@ -401,6 +435,9 @@ static void resolveTileCollision(Entity tile, Entity entity) {
     const Vec2 prevOverlap = Physics::GetPreviousOverlap(tile, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
+        if (!tile.get<CBoundingBox>().blockMove) {
+            return;
+        }
         const auto& tilePos = tile.get<CTransform>().pos;
         auto& entityPos = entity.get<CTransform>().pos;
 
@@ -449,7 +486,6 @@ void Scene_Zelda::playerEnemyCollision() {
 
 void Scene_Zelda::resolveHeartCollision(Entity heart, Entity entity) {
     const Vec2 overlap = Physics::GetOverlap(heart, entity);
-    const Vec2 prevOverlap = Physics::GetPreviousOverlap(heart, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
         entity.get<CHealth>().current = entity.get<CHealth>().max;
@@ -582,6 +618,8 @@ void Scene_Zelda::sRender() {
         m_game->window().clear(sf::Color(205, 142, 72));
     else
         m_game->window().clear(sf::Color(255, 192, 122));
+
+    m_game->window().draw(m_map);
 
     sf::RectangleShape tick({1.0f, 6.0f});
     tick.setFillColor(sf::Color::Black);

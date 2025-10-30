@@ -2,6 +2,8 @@
 
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.texture = m_texture;
+    states.transform *= m_transform;
+    states.coordinateType = sf::CoordinateType::Pixels;
     target.draw(m_vertices, states);
 }
 
@@ -10,6 +12,8 @@ Map::Map(const size_t width, const size_t height, const sf::Texture* texture, co
 }
 
 void Map::addTile(const size_t index, const sf::Vector2f& tileWorldPos, const sf::FloatRect& tileUV) {
+    assert(index+6 <= m_vertices.getVertexCount());
+
     m_vertices[index + 0].position = {tileWorldPos.x, tileWorldPos.y};
     m_vertices[index + 1].position = {tileWorldPos.x + m_tileSize, tileWorldPos.y};
     m_vertices[index + 2].position = {tileWorldPos.x, tileWorldPos.y + m_tileSize};

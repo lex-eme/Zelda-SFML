@@ -4,21 +4,22 @@
 
 #include "Scene.h"
 #include "Entity.h"
+#include "Map.h"
 
 class Scene_Zelda : public Scene {
     struct PlayerConfig {
         float X, Y, CX, CY, SPEED, HEALTH;
     };
 
-    std::string m_levelPath;
     PlayerConfig m_playerConfig{};
+    Map m_map;
+    sf::Text m_gridText;
+    const Vec2 m_gridSize = {64.0f, 64.0f};
     bool m_drawTextures = true;
     bool m_drawCollision = false;
     bool m_drawGrid = false;
     bool m_drawDebug = false;
     bool m_follow = false;
-    const Vec2 m_gridSize = {64.0f, 64.0f};
-    sf::Text m_gridText;
 
 public:
     Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath);
