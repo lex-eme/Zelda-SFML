@@ -2,13 +2,49 @@
 
 #include <fstream>
 #include <imgui.h>
-#include <imgui_internal.h>
-#include "imgui-SFML.h"
+#include <imgui-SFML.h>
+
+Brush::Brush(TileMapEditor* editor)
+    : m_editor(editor) {
+}
+
+Paint::Paint(TileMapEditor* editor)
+    : Brush(editor) {
+}
+
+void Paint::start(const sf::Vector2f pos) {
+    m_editor->placeTile(pos);
+}
+
+void Paint::end(const sf::Vector2f pos) {
+}
+
+Rectangle::Rectangle(TileMapEditor* editor)
+    : Brush(editor) {
+}
+
+void Rectangle::start(const sf::Vector2f pos) {
+    if (m_started) {
+        return;
+    }
+    m_started = true;
+    m_start = pos;
+}
+
+void Rectangle::end(const sf::Vector2f pos) {
+    m_started = false;
+    m_editor->placeTiles(m_start, pos);
+}
 
 TileMapEditor::TileMapEditor(GameEngine* gameEngine)
     : Scene(gameEngine), m_spriteSheet(m_game->assets().getSpriteSheet("Env1")),
       m_tilePreview(m_spriteSheet.getTexture()) {
     init();
+}
+
+TileMapEditor::~TileMapEditor() {
+    delete m_brushes[0];
+    delete m_brushes[1];
 }
 
 void TileMapEditor::sRender() {
@@ -81,23 +117,30 @@ void TileMapEditor::sDoAction(const Action& action) {
         } else if (action.name() == "RIGHT") {
             moveMap({1.0f, 0.0f});
         } else if (action.name() == "PLACE") {
-            if (m_selectedTile != 0) {
-                const auto pos = getMouseWorldPosition();
-                const auto gridPos = getMouseGridPosition();
-                placeTile(pos, gridPos);
+            if (m_selectedTile == 0) {
+                return;
             }
+            m_brushes[m_brushIndex]->start(getMouseGridPosition());
         } else if (action.name() == "REMOVE") {
-            auto pos = getMouseGridPosition();
+            const auto pos = getMouseGridPosition();
             removeTile(pos);
+        }
+    } else if (action.type() == "END") {
+        if (action.name() == "PLACE") {
+            m_brushes[m_brushIndex]->end(getMouseGridPosition());
         }
     }
 }
 
 void TileMapEditor::sGUI() {
     ImGui::Begin("Asset Browser");
-    const ImGuiContext& g = *ImGui::GetCurrentContext();
-    const ImGuiIO& io = g.IO;
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    if (ImGui::RadioButton("Paint", m_brushIndex == 0)) {
+        m_brushIndex = 0;
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Rectangle", m_brushIndex == 1)) {
+        m_brushIndex = 1;
+    }
     ImGui::Checkbox("Draw Grid", &m_showGrid);
     if (ImGui::Button("Export")) {
         exportMap();
@@ -117,10 +160,9 @@ void TileMapEditor::createGridVertexArray() {
     const size_t vertexCount = (mapWidth() + 1) * 2 + (mapHeight() + 1) * 2;
     m_grid = sf::VertexArray(sf::PrimitiveType::Lines, vertexCount);
 
-    auto color = sf::Color::White;
     size_t index = 0;
     for (size_t col = 0; col <= mapWidth(); col += 1) {
-        color = col % 20 == 0 ? sf::Color::Black : sf::Color::White;
+        const auto color = col % 20 == 0 ? sf::Color::Black : sf::Color::White;
         m_grid[index].position = {col * mapTileSize(), 0.0f};
         m_grid[index].color = color;
         m_grid[index + 1].position = {col * mapTileSize(), mapHeight() * mapTileSize()};
@@ -129,7 +171,7 @@ void TileMapEditor::createGridVertexArray() {
     }
 
     for (size_t row = 0; row <= mapHeight(); row += 1) {
-        color = row % 12 == 0 ? sf::Color::Black : sf::Color::White;
+        const auto color = row % 12 == 0 ? sf::Color::Black : sf::Color::White;
         m_grid[index].position = {0.0f, row * mapTileSize()};
         m_grid[index].color = color;
         m_grid[index + 1].position = {mapWidth() * mapTileSize(), row * mapTileSize()};
@@ -188,7 +230,7 @@ void TileMapEditor::importMap() {
         fin >> x >> y >> sheetIndex;
         m_editorMapEntries[x + y * mapWidth()] = {true, index, sheetIndex};
 
-        sf::Vector2f pos = sf::Vector2f(x * mapTileSize(), y * mapTileSize());
+        sf::Vector2f pos = sf::Vector2f(x, y);
         const auto uv = sf::FloatRect(m_spriteSheet.getTile(sheetIndex));
         m_mapClass.addTile(index, pos, uv);
         index += 6;
@@ -216,21 +258,30 @@ sf::Vector2f TileMapEditor::getMouseWorldPosition() const {
     return getMouseGridPosition() * mapTileSize();
 }
 
-void TileMapEditor::placeTile(const sf::Vector2f& pos, const sf::Vector2f& gridPos) {
+void TileMapEditor::placeTile(const sf::Vector2f& pos) {
     size_t index;
-    if (m_editorMapEntries[gridPos.x + gridPos.y * mapWidth()].isUsed) {
+    if (m_editorMapEntries[pos.x + pos.y * mapWidth()].isUsed) {
         std::cout << "Replace vertices." << std::endl;
-        index = m_editorMapEntries[gridPos.x + gridPos.y * mapWidth()].vertexArrayIndex;
-        m_editorMapEntries[gridPos.x + gridPos.y * mapWidth()].spriteSheetIndex = m_selectedTile - 1;
+        index = m_editorMapEntries[pos.x + pos.y * mapWidth()].vertexArrayIndex;
+        m_editorMapEntries[pos.x + pos.y * mapWidth()].spriteSheetIndex = m_selectedTile - 1;
     } else {
         index = m_mapClass.getVertexCount();
         m_mapClass.setVertexCount(index + 6);
-        m_editorMapEntries[gridPos.x + gridPos.y * mapWidth()] = {true, index, m_selectedTile - 1};
+        m_editorMapEntries[pos.x + pos.y * mapWidth()] = {true, index, m_selectedTile - 1};
         m_tileCount += 1;
     }
 
     const auto uv = sf::FloatRect(m_spriteSheet.getTile(m_selectedTile - 1));
     m_mapClass.addTile(index, pos, uv);
+}
+
+void TileMapEditor::placeTiles(const sf::Vector2f& from, const sf::Vector2f& to) {
+    for (float row = from.x; row <= to.x; row += 1.0f) {
+        for (float col = from.y; col <= to.y; col += 1.0f) {
+            auto pos = sf::Vector2f(row, col);
+            placeTile(pos);
+        }
+    }
 }
 
 void TileMapEditor::removeTile(const sf::Vector2f& pos) {

@@ -61,11 +61,11 @@ void Scene_Zelda::init(const std::string& levelPath) {
     mapFin >> mapType;
     size_t index = 0;
     while (mapType == "t") {
-        int x, y;
+        float x, y;
         size_t sheetIndex;
         mapFin >> x >> y >> sheetIndex;
 
-        sf::Vector2f pos = sf::Vector2f(x * tileSize, y * tileSize);
+        sf::Vector2f pos = sf::Vector2f(x, y);
         const auto uv = sf::FloatRect(spriteSheet.getTile(sheetIndex));
         m_map.addTile(index, pos, uv);
         index += 6;

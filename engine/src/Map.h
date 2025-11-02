@@ -15,7 +15,7 @@ public:
     Map() = default;
     Map(size_t width, size_t height, const sf::Texture* texture, float tileSize);
 
-    void addTile(size_t index, const sf::Vector2f& tileWorldPos, const sf::FloatRect& tileUV);
+    void addTile(size_t index, const sf::Vector2f& pos, const sf::FloatRect& tileUV);
     void removeTile(size_t index);
     void setVertexCount(size_t size);
     [[nodiscard]] size_t getVertexCount() const;

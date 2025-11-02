@@ -4,13 +4,46 @@
 #include "Map.h"
 #include "Scene.h"
 
+class TileMapEditor;
+
 struct EditorMapEntry {
     bool isUsed = false;
     size_t vertexArrayIndex = 0;
     size_t spriteSheetIndex = 0;
 };
 
-class TileMapEditor : public Scene {
+class Brush {
+protected:
+    TileMapEditor* m_editor;
+
+    explicit Brush(TileMapEditor* editor);
+
+public:
+    virtual ~Brush() = default;
+    virtual void start(sf::Vector2f pos) = 0;
+    virtual void end(sf::Vector2f pos) = 0;
+};
+
+class Paint final : public Brush {
+public:
+    explicit Paint(TileMapEditor* editor);
+
+    void start(sf::Vector2f pos) override;
+    void end(sf::Vector2f pos) override;
+};
+
+class Rectangle final : public Brush {
+    sf::Vector2f m_start;
+    bool m_started = false;
+
+public:
+    explicit Rectangle(TileMapEditor* editor);
+
+    void start(sf::Vector2f pos) override;
+    void end(sf::Vector2f pos) override;
+};
+
+class TileMapEditor final : public Scene {
     Map m_mapClass;
     size_t m_selectedTile = 0;
     sf::VertexArray m_grid;
@@ -18,10 +51,17 @@ class TileMapEditor : public Scene {
     size_t m_tileCount = 0;
     SpriteSheet m_spriteSheet;
     sf::Sprite m_tilePreview;
+    Brush* m_brushes[2]{new Paint(this), new Rectangle(this)};
+    size_t m_brushIndex = 0;
     bool m_showGrid = true;
 
 public:
     explicit TileMapEditor(GameEngine* gameEngine = nullptr);
+    ~TileMapEditor() override;
+
+    void placeTile(const sf::Vector2f& pos);
+    void placeTiles(const sf::Vector2f& from, const sf::Vector2f& to);
+    float& mapTileSize() { return m_mapClass.tileSize(); }
 
 private:
     void init();
@@ -37,7 +77,6 @@ private:
     void importMap();
     sf::Vector2f getMouseGridPosition() const;
     sf::Vector2f getMouseWorldPosition() const;
-    void placeTile(const sf::Vector2f& pos, const sf::Vector2f& gridPos);
     void removeTile(const sf::Vector2f& pos);
     void zoom(bool in) const;
     void moveMap(sf::Vector2f direction) const;
@@ -45,7 +84,6 @@ private:
 
     size_t& mapWidth() { return m_mapClass.width(); }
     size_t& mapHeight() { return m_mapClass.height(); }
-    float& mapTileSize() { return m_mapClass.tileSize(); }
 
     [[nodiscard]] const size_t& mapWidth() const { return m_mapClass.width(); }
     [[nodiscard]] const size_t& mapHeight() const { return m_mapClass.height(); }

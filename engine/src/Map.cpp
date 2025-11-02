@@ -11,15 +11,16 @@ Map::Map(const size_t width, const size_t height, const sf::Texture* texture, co
     : m_width(width), m_heigh(height), m_texture(texture), m_tileSize(tileSize) {
 }
 
-void Map::addTile(const size_t index, const sf::Vector2f& tileWorldPos, const sf::FloatRect& tileUV) {
+void Map::addTile(const size_t index, const sf::Vector2f& pos, const sf::FloatRect& tileUV) {
     assert(index+6 <= m_vertices.getVertexCount());
+    auto worldPos = pos * m_tileSize;
 
-    m_vertices[index + 0].position = {tileWorldPos.x, tileWorldPos.y};
-    m_vertices[index + 1].position = {tileWorldPos.x + m_tileSize, tileWorldPos.y};
-    m_vertices[index + 2].position = {tileWorldPos.x, tileWorldPos.y + m_tileSize};
-    m_vertices[index + 3].position = {tileWorldPos.x, tileWorldPos.y + m_tileSize};
-    m_vertices[index + 4].position = {tileWorldPos.x + m_tileSize, tileWorldPos.y + m_tileSize};
-    m_vertices[index + 5].position = {tileWorldPos.x + m_tileSize, tileWorldPos.y};
+    m_vertices[index + 0].position = {worldPos.x, worldPos.y};
+    m_vertices[index + 1].position = {worldPos.x + m_tileSize, worldPos.y};
+    m_vertices[index + 2].position = {worldPos.x, worldPos.y + m_tileSize};
+    m_vertices[index + 3].position = {worldPos.x, worldPos.y + m_tileSize};
+    m_vertices[index + 4].position = {worldPos.x + m_tileSize, worldPos.y + m_tileSize};
+    m_vertices[index + 5].position = {worldPos.x + m_tileSize, worldPos.y};
 
     m_vertices[index + 0].texCoords = {tileUV.position.x, tileUV.position.y};
     m_vertices[index + 1].texCoords = {tileUV.position.x + tileUV.size.x, tileUV.position.y};
@@ -47,7 +48,7 @@ size_t Map::getVertexCount() const {
 }
 
 sf::Texture Map::copyTexture() const {
-    auto size = sf::Vector2u(m_width * m_tileSize, m_heigh * m_tileSize);
+    const auto size = sf::Vector2u(m_width * m_tileSize, m_heigh * m_tileSize);
     sf::RenderTexture rt(size);
     sf::RenderStates states;
     states.texture = m_texture;
