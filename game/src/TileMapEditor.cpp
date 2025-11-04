@@ -13,10 +13,15 @@ Paint::Paint(TileMapEditor* editor)
 }
 
 void Paint::start(const sf::Vector2f pos) {
+    if (m_started) {
+        return;
+    }
+    m_started = true;
     m_editor->placeTile(pos);
 }
 
 void Paint::end(const sf::Vector2f pos) {
+    m_started = false;
 }
 
 Rectangle::Rectangle(TileMapEditor* editor)
@@ -276,8 +281,11 @@ void TileMapEditor::placeTile(const sf::Vector2f& pos) {
 }
 
 void TileMapEditor::placeTiles(const sf::Vector2f& from, const sf::Vector2f& to) {
-    for (float row = from.x; row <= to.x; row += 1.0f) {
-        for (float col = from.y; col <= to.y; col += 1.0f) {
+    const sf::Vector2f min = {std::min(from.x, to.x), std::min(from.y, to.y)};
+    const sf::Vector2f max = {std::max(from.x, to.x), std::max(from.y, to.y)};
+
+    for (float row = min.x; row <= max.x; row += 1.0f) {
+        for (float col = min.y; col <= max.y; col += 1.0f) {
             auto pos = sf::Vector2f(row, col);
             placeTile(pos);
         }

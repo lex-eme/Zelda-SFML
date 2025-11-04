@@ -25,6 +25,8 @@ public:
 };
 
 class Paint final : public Brush {
+    bool m_started = false;
+
 public:
     explicit Paint(TileMapEditor* editor);
 
