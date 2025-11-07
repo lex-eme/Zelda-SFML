@@ -4,74 +4,6 @@
 #include <imgui.h>
 #include <imgui-SFML.h>
 
-Brush::Brush(TileMapEditor* editor)
-    : m_editor(editor) {
-}
-
-Paint::Paint(TileMapEditor* editor)
-    : Brush(editor) {
-}
-
-void Paint::start(const sf::Vector2f pos) {
-    if (m_started) {
-        return;
-    }
-    m_started = true;
-    m_editor->placeTile(pos);
-}
-
-void Paint::end(const sf::Vector2f pos) {
-    m_started = false;
-}
-
-void Paint::update(const sf::Vector2f pos) {
-    m_editor->getPreviewSprite().setPosition(pos * m_editor->mapTileSize());
-}
-
-void Paint::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    target.draw(m_editor->getPreviewSprite());
-}
-
-Rectangle::Rectangle(TileMapEditor* editor)
-    : Brush(editor) {
-}
-
-void Rectangle::start(const sf::Vector2f pos) {
-    if (m_started) {
-        return;
-    }
-    m_started = true;
-    m_start = pos;
-    m_end = pos;
-}
-
-void Rectangle::end(const sf::Vector2f pos) {
-    m_started = false;
-    m_editor->placeTiles(m_start, pos);
-}
-
-void Rectangle::update(const sf::Vector2f pos) {
-    m_end = pos;
-}
-
-void Rectangle::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    if (!m_started) {
-        m_editor->getPreviewSprite().setPosition(m_end * m_editor->mapTileSize());
-        target.draw(m_editor->getPreviewSprite());
-        return;
-    }
-    const sf::Vector2f min = {std::min(m_start.x, m_end.x), std::min(m_start.y, m_end.y)};
-    const sf::Vector2f max = {std::max(m_start.x, m_end.x), std::max(m_start.y, m_end.y)};
-
-    for (float row = min.x; row <= max.x; row += 1.0f) {
-        for (float col = min.y; col <= max.y; col += 1.0f) {
-            const auto pos = sf::Vector2f(row, col) * m_editor->mapTileSize();
-            m_editor->getPreviewSprite().setPosition(pos);
-            target.draw(m_editor->getPreviewSprite());
-        }
-    }
-}
-
 TileMapEditor::TileMapEditor(GameEngine* gameEngine)
     : Scene(gameEngine), m_spriteSheet(m_game->assets().getSpriteSheet("Env1")),
       m_tilePreview(m_spriteSheet.getTexture()) {
@@ -305,18 +237,6 @@ void TileMapEditor::placeTile(const sf::Vector2f& pos) {
 
     const auto uv = sf::FloatRect(m_spriteSheet.getTile(m_selectedTile - 1));
     m_mapClass.addTile(index, pos, uv);
-}
-
-void TileMapEditor::placeTiles(const sf::Vector2f& from, const sf::Vector2f& to) {
-    const sf::Vector2f min = {std::min(from.x, to.x), std::min(from.y, to.y)};
-    const sf::Vector2f max = {std::max(from.x, to.x), std::max(from.y, to.y)};
-
-    for (float row = min.x; row <= max.x; row += 1.0f) {
-        for (float col = min.y; col <= max.y; col += 1.0f) {
-            auto pos = sf::Vector2f(row, col);
-            placeTile(pos);
-        }
-    }
 }
 
 void TileMapEditor::removeTile(const sf::Vector2f& pos) {

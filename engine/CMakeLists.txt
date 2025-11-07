@@ -24,6 +24,14 @@ set(SOURCES
         src/SpriteSheet.h
         src/Map.cpp
         src/Map.h
+        src/editor/brush/Brush.cpp
+        src/editor/brush/Brush.h
+        src/editor/TileMapEditor.cpp
+        src/editor/TileMapEditor.h
+        src/editor/brush/Brush_Paint.cpp
+        src/editor/brush/Brush_Paint.h
+        src/editor/brush/Brush_Rectangle.cpp
+        src/editor/brush/Brush_Rectangle.h
 )
 
 add_library(Engine STATIC)

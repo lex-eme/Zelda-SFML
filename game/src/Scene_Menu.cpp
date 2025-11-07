@@ -2,7 +2,7 @@
 
 #include "GameEngine.h"
 #include "Scene_Zelda.h"
-#include "TileMapEditor.h"
+#include "editor/TileMapEditor.h"
 
 Scene_Menu::Scene_Menu(GameEngine* gameEngine)
     : Scene(gameEngine), m_menuText(gameEngine->assets().getFont("Megaman")) {

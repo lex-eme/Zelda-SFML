@@ -4,8 +4,7 @@ set(SOURCES
         src/Scene_Menu.h
         src/Scene_Zelda.cpp
         src/Scene_Zelda.h
-        src/TileMapEditor.cpp
-        src/TileMapEditor.h)
+)
 
 add_executable(App)
 target_sources(App PRIVATE ${SOURCES})

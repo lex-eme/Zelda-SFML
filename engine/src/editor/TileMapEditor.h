@@ -3,51 +3,9 @@
 
 #include "Map.h"
 #include "Scene.h"
-
-class TileMapEditor;
-
-class Brush : public sf::Drawable {
-protected:
-    TileMapEditor* m_editor;
-
-    explicit Brush(TileMapEditor* editor);
-
-public:
-    ~Brush() override = default;
-    virtual void start(sf::Vector2f pos) = 0;
-    virtual void end(sf::Vector2f pos) = 0;
-    virtual void update(sf::Vector2f pos) = 0;
-};
-
-class Paint final : public Brush {
-    bool m_started = false;
-
-public:
-    explicit Paint(TileMapEditor* editor);
-
-    void start(sf::Vector2f pos) override;
-    void end(sf::Vector2f pos) override;
-    void update(sf::Vector2f pos) override;
-
-protected:
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-};
-
-class Rectangle final : public Brush {
-    sf::Vector2f m_start;
-    sf::Vector2f m_end;
-    bool m_started = false;
-
-public:
-    explicit Rectangle(TileMapEditor* editor);
-
-    void start(sf::Vector2f pos) override;
-    void end(sf::Vector2f pos) override;
-    void update(sf::Vector2f pos) override;
-
-protected:
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-};
+#include "brush/Brush.h"
+#include "brush/Brush_Paint.h"
+#include "brush/Brush_Rectangle.h"
 
 class TileMapEditor final : public Scene {
     struct EditorMapEntry {
@@ -63,7 +21,7 @@ class TileMapEditor final : public Scene {
     size_t m_tileCount = 0;
     SpriteSheet m_spriteSheet;
     sf::Sprite m_tilePreview;
-    Brush* m_brushes[2]{new Paint(this), new Rectangle(this)};
+    std::array<Engine::Brush*, 2> m_brushes = {new Engine::Brush_Paint(this), new Engine::Brush_Rectangle(this)};
     size_t m_brushIndex = 0;
     bool m_showGrid = true;
 
@@ -72,7 +30,6 @@ public:
     ~TileMapEditor() override;
 
     void placeTile(const sf::Vector2f& pos);
-    void placeTiles(const sf::Vector2f& from, const sf::Vector2f& to);
     float& mapTileSize() { return m_mapClass.tileSize(); }
     sf::Sprite& getPreviewSprite();
 
