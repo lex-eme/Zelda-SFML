@@ -11,6 +11,7 @@ namespace Engine {
         void start(sf::Vector2f pos) override;
         void end(sf::Vector2f pos) override;
         void update(sf::Vector2f pos) override;
+        void cancel() override;
 
     protected:
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

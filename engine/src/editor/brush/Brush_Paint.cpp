@@ -24,6 +24,10 @@ namespace Engine {
         m_editor->getPreviewSprite().setPosition(pos * m_editor->mapTileSize());
     }
 
+    void Brush_Paint::cancel() {
+        m_started = false;
+    }
+
     void Brush_Paint::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(m_editor->getPreviewSprite());
     }

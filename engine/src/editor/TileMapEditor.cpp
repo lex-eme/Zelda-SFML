@@ -65,6 +65,7 @@ void TileMapEditor::sDoAction(const Action& action) {
         if (action.name() == "QUIT") {
             if (m_selectedTile != 0) {
                 m_selectedTile = 0;
+                m_brushes[m_brushIndex]->cancel();
             } else {
                 onEnd();
             }
@@ -81,17 +82,18 @@ void TileMapEditor::sDoAction(const Action& action) {
         } else if (action.name() == "RIGHT") {
             moveMap({1.0f, 0.0f});
         } else if (action.name() == "PLACE") {
-            if (m_selectedTile == 0) {
-                return;
+            if (m_selectedTile != 0) {
+                m_brushes[m_brushIndex]->start(getMouseGridPosition());
             }
-            m_brushes[m_brushIndex]->start(getMouseGridPosition());
         } else if (action.name() == "REMOVE") {
             const auto pos = getMouseGridPosition();
             removeTile(pos);
         }
     } else if (action.type() == "END") {
         if (action.name() == "PLACE") {
-            m_brushes[m_brushIndex]->end(getMouseGridPosition());
+            if (m_selectedTile != 0) {
+                m_brushes[m_brushIndex]->end(getMouseGridPosition());
+            }
         }
     }
 }

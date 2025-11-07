@@ -17,6 +17,9 @@ namespace Engine {
     }
 
     void Brush_Rectangle::end(const sf::Vector2f pos) {
+        if (!m_started) {
+            return;
+        }
         m_started = false;
         const sf::Vector2f min = {std::min(m_start.x, m_end.x), std::min(m_start.y, m_end.y)};
         const sf::Vector2f max = {std::max(m_start.x, m_end.x), std::max(m_start.y, m_end.y)};
@@ -31,6 +34,10 @@ namespace Engine {
 
     void Brush_Rectangle::update(const sf::Vector2f pos) {
         m_end = pos;
+    }
+
+    void Brush_Rectangle::cancel() {
+        m_started = false;
     }
 
     void Brush_Rectangle::draw(sf::RenderTarget& target, sf::RenderStates states) const {
