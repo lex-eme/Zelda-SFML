@@ -24,6 +24,14 @@ void Paint::end(const sf::Vector2f pos) {
     m_started = false;
 }
 
+void Paint::update(const sf::Vector2f pos) {
+    m_editor->getPreviewSprite().setPosition(pos * m_editor->mapTileSize());
+}
+
+void Paint::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    target.draw(m_editor->getPreviewSprite());
+}
+
 Rectangle::Rectangle(TileMapEditor* editor)
     : Brush(editor) {
 }
@@ -34,11 +42,34 @@ void Rectangle::start(const sf::Vector2f pos) {
     }
     m_started = true;
     m_start = pos;
+    m_end = pos;
 }
 
 void Rectangle::end(const sf::Vector2f pos) {
     m_started = false;
     m_editor->placeTiles(m_start, pos);
+}
+
+void Rectangle::update(const sf::Vector2f pos) {
+    m_end = pos;
+}
+
+void Rectangle::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    if (!m_started) {
+        m_editor->getPreviewSprite().setPosition(m_end * m_editor->mapTileSize());
+        target.draw(m_editor->getPreviewSprite());
+        return;
+    }
+    const sf::Vector2f min = {std::min(m_start.x, m_end.x), std::min(m_start.y, m_end.y)};
+    const sf::Vector2f max = {std::max(m_start.x, m_end.x), std::max(m_start.y, m_end.y)};
+
+    for (float row = min.x; row <= max.x; row += 1.0f) {
+        for (float col = min.y; col <= max.y; col += 1.0f) {
+            const auto pos = sf::Vector2f(row, col) * m_editor->mapTileSize();
+            m_editor->getPreviewSprite().setPosition(pos);
+            target.draw(m_editor->getPreviewSprite());
+        }
+    }
 }
 
 TileMapEditor::TileMapEditor(GameEngine* gameEngine)
@@ -61,12 +92,7 @@ void TileMapEditor::sRender() {
     }
     window.draw(m_mapClass);
     if (m_selectedTile > 0) {
-        const auto gridPos = getMouseGridPosition();
-
-        if (!(gridPos.x < 0.0f || gridPos.x >= mapWidth() || gridPos.y < 0.0f || gridPos.y >= mapHeight())) {
-            m_tilePreview.setPosition(gridPos * mapTileSize());
-            window.draw(m_tilePreview);
-        }
+        window.draw(*m_brushes[m_brushIndex]);
     }
 
     sGUI();
@@ -94,6 +120,7 @@ void TileMapEditor::init() {
 
 void TileMapEditor::update(float deltaTime) {
     m_entityManager.update();
+    m_brushes[m_brushIndex]->update(getMouseGridPosition());
 }
 
 void TileMapEditor::onEnd() {
@@ -420,4 +447,8 @@ void TileMapEditor::renderAssetBrowser() {
         drawList->PopClipRect();
     }
     ImGui::EndChild();
+}
+
+sf::Sprite& TileMapEditor::getPreviewSprite() {
+    return m_tilePreview;
 }

@@ -6,22 +6,17 @@
 
 class TileMapEditor;
 
-struct EditorMapEntry {
-    bool isUsed = false;
-    size_t vertexArrayIndex = 0;
-    size_t spriteSheetIndex = 0;
-};
-
-class Brush {
+class Brush : public sf::Drawable {
 protected:
     TileMapEditor* m_editor;
 
     explicit Brush(TileMapEditor* editor);
 
 public:
-    virtual ~Brush() = default;
+    ~Brush() override = default;
     virtual void start(sf::Vector2f pos) = 0;
     virtual void end(sf::Vector2f pos) = 0;
+    virtual void update(sf::Vector2f pos) = 0;
 };
 
 class Paint final : public Brush {
@@ -32,10 +27,15 @@ public:
 
     void start(sf::Vector2f pos) override;
     void end(sf::Vector2f pos) override;
+    void update(sf::Vector2f pos) override;
+
+protected:
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
 class Rectangle final : public Brush {
     sf::Vector2f m_start;
+    sf::Vector2f m_end;
     bool m_started = false;
 
 public:
@@ -43,9 +43,19 @@ public:
 
     void start(sf::Vector2f pos) override;
     void end(sf::Vector2f pos) override;
+    void update(sf::Vector2f pos) override;
+
+protected:
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 };
 
 class TileMapEditor final : public Scene {
+    struct EditorMapEntry {
+        bool isUsed = false;
+        size_t vertexArrayIndex = 0;
+        size_t spriteSheetIndex = 0;
+    };
+
     Map m_mapClass;
     size_t m_selectedTile = 0;
     sf::VertexArray m_grid;
@@ -64,6 +74,7 @@ public:
     void placeTile(const sf::Vector2f& pos);
     void placeTiles(const sf::Vector2f& from, const sf::Vector2f& to);
     float& mapTileSize() { return m_mapClass.tileSize(); }
+    sf::Sprite& getPreviewSprite();
 
 private:
     void init();
