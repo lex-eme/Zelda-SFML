@@ -9,7 +9,7 @@
 #include <imgui_internal.h>
 
 Scene_Zelda::Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath)
-    : Scene(gameEngine), m_gridText(gameEngine->assets().getFont("Megaman")) {
+    : Scene(gameEngine), m_map(gameEngine), m_gridText(gameEngine->assets().getFont("Megaman")) {
     init(levelPath);
 }
 
@@ -31,53 +31,7 @@ void Scene_Zelda::update(float deltaTime) {
 
 void Scene_Zelda::init(const std::string& levelPath) {
     loadLevel(levelPath);
-
-    std::ifstream mapFin("./assets/map/mymap.txt");
-    std::string mapType;
-
-    mapFin >> mapType;
-    if (mapType != "Map") {
-        std::cerr << "Expected 'Map', found '" << mapType << "'." << std::endl;
-        return;
-    }
-
-    mapFin >> mapType;
-    if (mapType != "c") {
-        std::cerr << "Expected 'c', found '" << mapType << "'." << std::endl;
-        return;
-    }
-    size_t width, height, tileCount;
-    float tileSize;
-    mapFin >> width >> height >> tileSize >> tileCount >> mapType;
-    if (mapType != "n") {
-        std::cerr << "Expected 'n', found '" << mapType << "'." << std::endl;
-        return;
-    }
-    std::string name;
-    mapFin >> name;
-    const SpriteSheet& spriteSheet = m_game->assets().getSpriteSheet(name);
-    m_map = Map(width, height, &spriteSheet.getTexture(), tileSize);
-    m_map.setVertexCount(tileCount * 6);
-    mapFin >> mapType;
-    size_t index = 0;
-    while (mapType == "t") {
-        float x, y;
-        size_t sheetIndex;
-        mapFin >> x >> y >> sheetIndex;
-
-        sf::Vector2f pos = sf::Vector2f(x, y);
-        const auto uv = sf::FloatRect(spriteSheet.getTile(sheetIndex));
-        m_map.addTile(index, pos, uv);
-        index += 6;
-        mapFin >> mapType;
-    }
-
-    if (mapType != "EndMap") {
-        std::cerr << "Expected 'EndMap', found '" << mapType << "'." << std::endl;
-        return;
-    }
-
-    std::cout << "Imported indices:" << index << std::endl;
+    m_map.loadFromFile("./assets/map/mymap.txt");
 
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Mario"));
@@ -748,15 +702,17 @@ void Scene_Zelda::sDoAction(const Action& action) {
             action.name() == "TOGGLE_COLLISION") { m_drawCollision = !m_drawCollision; } else if (
             action.name() == "TOGGLE_GRID") { m_drawGrid = !m_drawGrid; } else if (
             action.name() == "TOGGLE_FOLLOW") { m_follow = !m_follow; } else if (
-            action.name() == "PAUSE") { m_paused = !m_paused; } else if (action.name() == "QUIT") { onEnd(); } else if (
-            action.name() == "UP") { input.up = true; } else if (action.name() == "DOWN") { input.down = true; } else if
-            (action.name() == "LEFT") { input.left = true; } else if (action.name() == "RIGHT") { input.right = true; } else
-            if (action.name() == "ATTACK") { spawnSword(player()); }
+            action.name() == "PAUSE") { m_paused = !m_paused; } else if (
+            action.name() == "QUIT") { onEnd(); } else if (
+            action.name() == "UP") { input.up = true; } else if (
+            action.name() == "DOWN") { input.down = true; } else if (
+            action.name() == "LEFT") { input.left = true; } else if (
+            action.name() == "RIGHT") { input.right = true; } else if (
+            action.name() == "ATTACK") { spawnSword(player()); }
     } else if (action.type() == "END") {
         if (action.name() == "UP") { input.up = false; } else if (
             action.name() == "DOWN") { input.down = false; } else if (
-            action.name() == "LEFT") { input.left = false; } else if (action.name() == "RIGHT") {
-            input.right = false;
-        }
+            action.name() == "LEFT") { input.left = false; } else if (
+            action.name() == "RIGHT") { input.right = false; }
     }
 }

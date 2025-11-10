@@ -1,5 +1,10 @@
 #include "Map.h"
 
+#include <fstream>
+#include <iostream>
+
+#include "SpriteSheet.h"
+
 void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     states.texture = m_texture;
     states.transform *= m_transform;
@@ -7,8 +12,77 @@ void Map::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     target.draw(m_vertices, states);
 }
 
-Map::Map(const size_t width, const size_t height, const sf::Texture* texture, const float tileSize)
-    : m_width(width), m_heigh(height), m_texture(texture), m_tileSize(tileSize) {
+Map::Map(GameEngine* game)
+    : m_game(game) {
+}
+
+void Map::loadFromFile(const std::string& path, MapLoader* loader) {
+    std::ifstream mapFin(path);
+    std::string mapType;
+
+    mapFin >> mapType;
+    if (mapType != "Map") {
+        std::cerr << "Expected 'Map', found '" << mapType << "'." << std::endl;
+        return;
+    }
+
+    mapFin >> mapType;
+    if (mapType != "c") {
+        std::cerr << "Expected 'c', found '" << mapType << "'." << std::endl;
+        return;
+    }
+    size_t tileCount;
+    mapFin >> m_width >> m_height >> m_tileSize >> tileCount >> mapType;
+    if (loader) {
+        loader->mapConfiguration(m_width, m_height);
+    }
+
+    if (mapType != "n") {
+        std::cerr << "Expected 'n', found '" << mapType << "'." << std::endl;
+        return;
+    }
+
+    std::string name;
+    mapFin >> name;
+    const SpriteSheet& spriteSheet = m_game->assets().getSpriteSheet(name);
+    m_texture = &spriteSheet.getTexture();
+    m_vertices.resize(tileCount * 6);
+
+    mapFin >> mapType;
+    size_t index = 0;
+    while (mapType == "t") {
+        float x, y;
+        size_t sheetIndex;
+        mapFin >> x >> y >> sheetIndex;
+
+        sf::Vector2f pos = sf::Vector2f(x, y);
+        const auto uv = sf::FloatRect(spriteSheet.getTile(sheetIndex));
+        addTile(index, pos, uv);
+        index += 6;
+        mapFin >> mapType;
+        if (loader) {
+            loader->mapTile(x, y, index, sheetIndex);
+        }
+    }
+
+    if (mapType != "EndMap") {
+        std::cerr << "Expected 'EndMap', found '" << mapType << "'." << std::endl;
+        return;
+    }
+
+    std::cout << "Imported indices:" << index << std::endl;
+}
+
+void Map::saveTexture(const std::string& path) const {
+    const auto size = sf::Vector2u(m_width * m_tileSize, m_height * m_tileSize);
+    sf::RenderTexture rt(size);
+    sf::RenderStates states;
+    states.texture = m_texture;
+    rt.draw(m_vertices, states);
+    rt.display();
+    if (rt.getTexture().copyToImage().saveToFile(path)) {
+        std::cout << "Map exported to " << path << std::endl;
+    }
 }
 
 void Map::addTile(const size_t index, const sf::Vector2f& pos, const sf::FloatRect& tileUV) {
@@ -45,14 +119,4 @@ void Map::setVertexCount(const size_t size) {
 
 size_t Map::getVertexCount() const {
     return m_vertices.getVertexCount();
-}
-
-sf::Texture Map::copyTexture() const {
-    const auto size = sf::Vector2u(m_width * m_tileSize, m_heigh * m_tileSize);
-    sf::RenderTexture rt(size);
-    sf::RenderStates states;
-    states.texture = m_texture;
-    rt.draw(m_vertices, states);
-    rt.display();
-    return rt.getTexture();
 }

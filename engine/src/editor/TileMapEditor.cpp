@@ -5,8 +5,8 @@
 #include <imgui-SFML.h>
 
 TileMapEditor::TileMapEditor(GameEngine* gameEngine)
-    : Scene(gameEngine), m_spriteSheet(m_game->assets().getSpriteSheet("Env1")),
-      m_tilePreview(m_spriteSheet.getTexture()) {
+    : Scene(gameEngine), m_map(gameEngine),
+      m_spriteSheet(m_game->assets().getSpriteSheet("Env1")), m_tilePreview(m_spriteSheet.getTexture()) {
     init();
 }
 
@@ -22,7 +22,7 @@ void TileMapEditor::sRender() {
     if (m_showGrid) {
         window.draw(m_grid);
     }
-    window.draw(m_mapClass);
+    window.draw(m_map);
     if (m_selectedTile > 0) {
         window.draw(*m_brushes[m_brushIndex]);
     }
@@ -41,7 +41,7 @@ void TileMapEditor::init() {
     registerAction(sf::Keyboard::Key::Space, "PLACE");
     registerAction(sf::Keyboard::Key::X, "REMOVE");
 
-    importMap();
+    m_map.loadFromFile("./assets/map/mymap.txt", this);
     createGridVertexArray();
 
     m_tilePreview.setColor(sf::Color(255, 255, 255, 150));
@@ -113,10 +113,7 @@ void TileMapEditor::sGUI() {
     }
     ImGui::SameLine();
     if (ImGui::Button("Export png")) {
-        const auto texture = m_mapClass.copyTexture();
-        if (texture.copyToImage().saveToFile("newspritesheet.png")) {
-            std::cout << "Map exported to " << "newspritesheet.png" << std::endl;
-        }
+        m_map.saveTexture("newspritesheet.png");
     }
     renderAssetBrowser();
     ImGui::End();
@@ -162,55 +159,6 @@ void TileMapEditor::exportMap() const {
     file << "EndMap" << std::endl;
 }
 
-void TileMapEditor::importMap() {
-    std::ifstream fin("./assets/map/mymap.txt");
-    std::string type;
-
-    fin >> type;
-    if (type != "Map") {
-        std::cerr << "Expected 'Map', found '" << type << "'." << std::endl;
-        return;
-    }
-
-    fin >> type;
-    if (type != "c") {
-        std::cerr << "Expected 'c', found '" << type << "'." << std::endl;
-        return;
-    } {
-        fin >> mapWidth() >> mapHeight() >> mapTileSize() >> m_tileCount >> type;
-        if (type != "n") {
-            std::cerr << "Expected 'n', found '" << type << "'." << std::endl;
-            return;
-        }
-        std::string name;
-        fin >> name;
-        m_mapClass = Map(mapWidth(), mapHeight(), &m_spriteSheet.getTexture(), mapTileSize());
-        m_mapClass.setVertexCount(m_tileCount * 6);
-        m_editorMapEntries.resize(mapWidth() * mapHeight());
-    }
-    fin >> type;
-    size_t index = 0;
-    while (type == "t") {
-        int x, y;
-        size_t sheetIndex;
-        fin >> x >> y >> sheetIndex;
-        m_editorMapEntries[x + y * mapWidth()] = {true, index, sheetIndex};
-
-        sf::Vector2f pos = sf::Vector2f(x, y);
-        const auto uv = sf::FloatRect(m_spriteSheet.getTile(sheetIndex));
-        m_mapClass.addTile(index, pos, uv);
-        index += 6;
-        fin >> type;
-    }
-
-    if (type != "EndMap") {
-        std::cerr << "Expected 'EndMap', found '" << type << "'." << std::endl;
-        return;
-    }
-
-    std::cout << "Imported indices:" << index << std::endl;
-}
-
 sf::Vector2f TileMapEditor::getMouseGridPosition() const {
     const auto& window = m_game->window();
     const sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
@@ -231,14 +179,14 @@ void TileMapEditor::placeTile(const sf::Vector2f& pos) {
         index = m_editorMapEntries[pos.x + pos.y * mapWidth()].vertexArrayIndex;
         m_editorMapEntries[pos.x + pos.y * mapWidth()].spriteSheetIndex = m_selectedTile - 1;
     } else {
-        index = m_mapClass.getVertexCount();
-        m_mapClass.setVertexCount(index + 6);
+        index = m_map.getVertexCount();
+        m_map.setVertexCount(index + 6);
         m_editorMapEntries[pos.x + pos.y * mapWidth()] = {true, index, m_selectedTile - 1};
         m_tileCount += 1;
     }
 
     const auto uv = sf::FloatRect(m_spriteSheet.getTile(m_selectedTile - 1));
-    m_mapClass.addTile(index, pos, uv);
+    m_map.addTile(index, pos, uv);
 }
 
 void TileMapEditor::removeTile(const sf::Vector2f& pos) {
@@ -247,7 +195,7 @@ void TileMapEditor::removeTile(const sf::Vector2f& pos) {
     }
 
     const size_t index = m_editorMapEntries[pos.x + pos.y * mapWidth()].vertexArrayIndex;
-    m_mapClass.removeTile(index);
+    m_map.removeTile(index);
     m_editorMapEntries[pos.x + pos.y * mapWidth()].isUsed = false;
     m_tileCount -= 1;
 }
@@ -369,6 +317,14 @@ void TileMapEditor::renderAssetBrowser() {
         drawList->PopClipRect();
     }
     ImGui::EndChild();
+}
+
+void TileMapEditor::mapConfiguration(const size_t width, const size_t height) {
+    m_editorMapEntries.resize(width * height);
+}
+
+void TileMapEditor::mapTile(const int x, const int y, const size_t vertexIndex, const size_t tileIndex) {
+    m_editorMapEntries[x + y * mapWidth()] = {true, vertexIndex, tileIndex};
 }
 
 sf::Sprite& TileMapEditor::getPreviewSprite() {

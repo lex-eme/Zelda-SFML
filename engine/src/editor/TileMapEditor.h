@@ -7,14 +7,14 @@
 #include "brush/Brush_Paint.h"
 #include "brush/Brush_Rectangle.h"
 
-class TileMapEditor final : public Scene {
+class TileMapEditor final : public Scene, public MapLoader {
     struct EditorMapEntry {
         bool isUsed = false;
         size_t vertexArrayIndex = 0;
         size_t spriteSheetIndex = 0;
     };
 
-    Map m_mapClass;
+    Map m_map;
     size_t m_selectedTile = 0;
     sf::VertexArray m_grid;
     std::vector<EditorMapEntry> m_editorMapEntries;
@@ -30,8 +30,11 @@ public:
     ~TileMapEditor() override;
 
     void placeTile(const sf::Vector2f& pos);
-    float& mapTileSize() { return m_mapClass.tileSize(); }
+    float& mapTileSize() { return m_map.tileSize(); }
     sf::Sprite& getPreviewSprite();
+
+    void mapConfiguration(size_t width, size_t height) override;
+    void mapTile(int x, int y, size_t vertexIndex, size_t tileIndex) override;
 
 private:
     void init();
@@ -44,7 +47,6 @@ private:
 
     void createGridVertexArray();
     void exportMap() const;
-    void importMap();
     sf::Vector2f getMouseGridPosition() const;
     sf::Vector2f getMouseWorldPosition() const;
     void removeTile(const sf::Vector2f& pos);
@@ -52,10 +54,10 @@ private:
     void moveMap(sf::Vector2f direction) const;
     void renderAssetBrowser();
 
-    size_t& mapWidth() { return m_mapClass.width(); }
-    size_t& mapHeight() { return m_mapClass.height(); }
+    size_t& mapWidth() { return m_map.width(); }
+    size_t& mapHeight() { return m_map.height(); }
 
-    [[nodiscard]] const size_t& mapWidth() const { return m_mapClass.width(); }
-    [[nodiscard]] const size_t& mapHeight() const { return m_mapClass.height(); }
-    [[nodiscard]] const float& mapTileSize() const { return m_mapClass.tileSize(); }
+    [[nodiscard]] const size_t& mapWidth() const { return m_map.width(); }
+    [[nodiscard]] const size_t& mapHeight() const { return m_map.height(); }
+    [[nodiscard]] const float& mapTileSize() const { return m_map.tileSize(); }
 };
