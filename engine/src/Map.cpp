@@ -51,18 +51,18 @@ void Map::loadFromFile(const std::string& path, MapLoader* loader) {
     mapFin >> mapType;
     size_t index = 0;
     while (mapType == "t") {
-        float x, y;
+        int x, y;
         size_t sheetIndex;
         mapFin >> x >> y >> sheetIndex;
 
-        sf::Vector2f pos = sf::Vector2f(x, y);
+        sf::Vector2i pos = sf::Vector2i(x, y);
         const auto uv = sf::FloatRect(spriteSheet.getTile(sheetIndex));
         addTile(index, pos, uv);
-        index += 6;
         mapFin >> mapType;
         if (loader) {
             loader->mapTile(x, y, index, sheetIndex);
         }
+        index += 6;
     }
 
     if (mapType != "EndMap") {
@@ -85,9 +85,9 @@ void Map::saveTexture(const std::string& path) const {
     }
 }
 
-void Map::addTile(const size_t index, const sf::Vector2f& pos, const sf::FloatRect& tileUV) {
+void Map::addTile(const size_t index, const sf::Vector2i& pos, const sf::FloatRect& tileUV) {
     assert(index+6 <= m_vertices.getVertexCount());
-    auto worldPos = pos * m_tileSize;
+    auto worldPos = sf::Vector2f(pos.x * m_tileSize, pos.y * m_tileSize);
 
     m_vertices[index + 0].position = {worldPos.x, worldPos.y};
     m_vertices[index + 1].position = {worldPos.x + m_tileSize, worldPos.y};

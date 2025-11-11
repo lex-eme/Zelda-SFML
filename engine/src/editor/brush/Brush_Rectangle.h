@@ -3,16 +3,16 @@
 
 namespace Engine {
     class Brush_Rectangle final : public Brush {
-        sf::Vector2f m_start;
-        sf::Vector2f m_end;
+        sf::Vector2i m_start;
+        sf::Vector2i m_end;
         bool m_started = false;
 
     public:
         explicit Brush_Rectangle(TileMapEditor* editor);
 
-        void start(sf::Vector2f pos) override;
-        void end(sf::Vector2f pos) override;
-        void update(sf::Vector2f pos) override;
+        void start(sf::Vector2i pos) override;
+        void end(sf::Vector2i pos) override;
+        void update(sf::Vector2i pos) override;
         void cancel() override;
 
     protected:

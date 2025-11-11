@@ -12,9 +12,9 @@ namespace Engine {
 
     public:
         ~Brush() override = default;
-        virtual void start(sf::Vector2f pos) = 0;
-        virtual void end(sf::Vector2f pos) = 0;
-        virtual void update(sf::Vector2f pos) = 0;
+        virtual void start(sf::Vector2i pos) = 0;
+        virtual void end(sf::Vector2i pos) = 0;
+        virtual void update(sf::Vector2i pos) = 0;
         virtual void cancel() = 0;
     };
 } // Engine

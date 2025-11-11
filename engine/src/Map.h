@@ -26,7 +26,7 @@ public:
     void loadFromFile(const std::string& path, MapLoader* loader = nullptr);
     void saveTexture(const std::string& path) const;
 
-    void addTile(size_t index, const sf::Vector2f& pos, const sf::FloatRect& tileUV);
+    void addTile(size_t index, const sf::Vector2i& pos, const sf::FloatRect& tileUV);
     void removeTile(size_t index);
     void setVertexCount(size_t size);
     [[nodiscard]] size_t getVertexCount() const;

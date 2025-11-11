@@ -8,7 +8,7 @@ namespace Engine {
         : Brush(editor) {
     }
 
-    void Brush_Paint::start(const sf::Vector2f pos) {
+    void Brush_Paint::start(const sf::Vector2i pos) {
         if (m_started) {
             return;
         }
@@ -16,12 +16,12 @@ namespace Engine {
         m_editor->placeTile(pos);
     }
 
-    void Brush_Paint::end(const sf::Vector2f pos) {
+    void Brush_Paint::end(const sf::Vector2i pos) {
         m_started = false;
     }
 
-    void Brush_Paint::update(const sf::Vector2f pos) {
-        m_editor->getPreviewSprite().setPosition(pos * m_editor->mapTileSize());
+    void Brush_Paint::update(const sf::Vector2i pos) {
+        m_editor->getPreviewSprite().setPosition({pos.x * m_editor->mapTileSize(), pos.y * m_editor->mapTileSize()});
     }
 
     void Brush_Paint::cancel() {

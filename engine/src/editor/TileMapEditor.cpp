@@ -159,20 +159,20 @@ void TileMapEditor::exportMap() const {
     file << "EndMap" << std::endl;
 }
 
-sf::Vector2f TileMapEditor::getMouseGridPosition() const {
+sf::Vector2i TileMapEditor::getMouseGridPosition() const {
     const auto& window = m_game->window();
     const sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
     const sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
-    const sf::Vector2f gridPos = sf::Vector2f(static_cast<int>(worldPos.x) / static_cast<int>(mapTileSize()),
+    const sf::Vector2i gridPos = sf::Vector2i(static_cast<int>(worldPos.x) / static_cast<int>(mapTileSize()),
                                               static_cast<int>(worldPos.y) / static_cast<int>(mapTileSize()));
     return gridPos;
 }
 
 sf::Vector2f TileMapEditor::getMouseWorldPosition() const {
-    return getMouseGridPosition() * mapTileSize();
+    return {getMouseGridPosition().x * mapTileSize(), getMouseGridPosition().y * mapTileSize()};
 }
 
-void TileMapEditor::placeTile(const sf::Vector2f& pos) {
+void TileMapEditor::placeTile(const sf::Vector2i& pos) {
     size_t index;
     if (m_editorMapEntries[pos.x + pos.y * mapWidth()].isUsed) {
         std::cout << "Replace vertices." << std::endl;
@@ -189,7 +189,7 @@ void TileMapEditor::placeTile(const sf::Vector2f& pos) {
     m_map.addTile(index, pos, uv);
 }
 
-void TileMapEditor::removeTile(const sf::Vector2f& pos) {
+void TileMapEditor::removeTile(const sf::Vector2i& pos) {
     if (!m_editorMapEntries[pos.x + pos.y * mapWidth()].isUsed) {
         return;
     }

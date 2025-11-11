@@ -8,9 +8,9 @@ namespace Engine {
     public:
         explicit Brush_Paint(TileMapEditor* editor);
 
-        void start(sf::Vector2f pos) override;
-        void end(sf::Vector2f pos) override;
-        void update(sf::Vector2f pos) override;
+        void start(sf::Vector2i pos) override;
+        void end(sf::Vector2i pos) override;
+        void update(sf::Vector2i pos) override;
         void cancel() override;
 
     protected:

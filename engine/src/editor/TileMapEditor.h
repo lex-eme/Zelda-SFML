@@ -29,7 +29,7 @@ public:
     explicit TileMapEditor(GameEngine* gameEngine = nullptr);
     ~TileMapEditor() override;
 
-    void placeTile(const sf::Vector2f& pos);
+    void placeTile(const sf::Vector2i& pos);
     float& mapTileSize() { return m_map.tileSize(); }
     sf::Sprite& getPreviewSprite();
 
@@ -47,9 +47,9 @@ private:
 
     void createGridVertexArray();
     void exportMap() const;
-    sf::Vector2f getMouseGridPosition() const;
+    sf::Vector2i getMouseGridPosition() const;
     sf::Vector2f getMouseWorldPosition() const;
-    void removeTile(const sf::Vector2f& pos);
+    void removeTile(const sf::Vector2i& pos);
     void zoom(bool in) const;
     void moveMap(sf::Vector2f direction) const;
     void renderAssetBrowser();

@@ -3,8 +3,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "Map.h"
-
 void Assets::loadFromFile(const std::string& path) {
     std::ifstream fin(path);
     std::string type;
