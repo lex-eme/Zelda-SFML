@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include "Components.h"
 #include "EntityMemoryPool.h"
 

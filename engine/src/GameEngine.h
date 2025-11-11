@@ -6,17 +6,18 @@
 #include "Scene.h"
 #include "Assets.h"
 
-typedef std::unordered_map<std::string, std::shared_ptr<Scene> > SceneMap;
+using SceneMap = std::unordered_map<std::string, std::shared_ptr<Scene>>;
 
 class GameEngine {
     sf::RenderWindow m_window;
     Assets m_assets;
     std::string m_currentScene;
     SceneMap m_sceneMap;
-    bool m_running = true;
     sf::Clock m_deltaClock;
+    bool m_running = true;
 
 public:
+    static sf::Texture s_defaultTexture;
     static float s_deltaTime;
 
     explicit GameEngine(const std::string& path);

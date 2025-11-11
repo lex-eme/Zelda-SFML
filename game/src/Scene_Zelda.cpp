@@ -9,7 +9,7 @@
 #include <imgui_internal.h>
 
 Scene_Zelda::Scene_Zelda(GameEngine* gameEngine, const std::string& levelPath)
-    : Scene(gameEngine), m_levelPath(levelPath), m_gridText(gameEngine->assets().getFont("Megaman")) {
+    : Scene(gameEngine), m_map(gameEngine), m_gridText(gameEngine->assets().getFont("Megaman")) {
     init(levelPath);
 }
 
@@ -31,6 +31,7 @@ void Scene_Zelda::update(float deltaTime) {
 
 void Scene_Zelda::init(const std::string& levelPath) {
     loadLevel(levelPath);
+    m_map.loadFromFile("./assets/map/mymap.txt");
 
     m_gridText.setCharacterSize(12);
     m_gridText.setFont(m_game->assets().getFont("Mario"));
@@ -62,12 +63,14 @@ void Scene_Zelda::loadLevel(const std::string& filename) {
 
             auto e = m_entityManager.addEntity(type);
 
-            auto& anim = m_game->assets().getAnimation(name);
-            e.add<CAnimation>(anim, true);
+            if (name == "Heart") {
+                auto& anim = m_game->assets().getAnimation(name);
+                e.add<CAnimation>(anim, true);
+            }
             Vec2 pos = getPosition(RX, RY, TX, TY);
             e.add<CTransform>(pos);
             e.add<CPrevPosition>(pos);
-            e.add<CBoundingBox>(anim.getSize(), BM == 1, BV == 1);
+            e.add<CBoundingBox>(m_gridSize, BM == 1, BV == 1);
         } else if (type == "NPC") {
             std::string name, AI;
             int RX, RY, TX, TY, BM, BV, H, D;
@@ -129,7 +132,8 @@ void Scene_Zelda::spawnPlayer() {
     p.add<CState>();
 }
 
-static void placeSword(std::string& animName, CTransform& sTransform, const CTransform& eTransform, const CFacing& eFacing) {
+static void placeSword(std::string& animName, CTransform& sTransform, const CTransform& eTransform,
+                       const CFacing& eFacing) {
     if (eFacing.facing.x != 0.0f) {
         sTransform.pos.x = eTransform.pos.x + eFacing.facing.x * 60.0f;
         sTransform.pos.y = eTransform.pos.y;
@@ -213,7 +217,6 @@ void Scene_Zelda::moveEntities(const std::string& tag) {
 
 void Scene_Zelda::sMovement() {
     const auto& input = player().get<CInput>();
-    auto& transform = player().get<CTransform>();
     auto& velocity = player().get<CVelocity>();
     auto& state = player().get<CState>();
 
@@ -386,6 +389,9 @@ static void resolveTileCollision(Entity tile, Entity entity) {
     const Vec2 prevOverlap = Physics::GetPreviousOverlap(tile, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
+        if (!tile.get<CBoundingBox>().blockMove) {
+            return;
+        }
         const auto& tilePos = tile.get<CTransform>().pos;
         auto& entityPos = entity.get<CTransform>().pos;
 
@@ -434,7 +440,6 @@ void Scene_Zelda::playerEnemyCollision() {
 
 void Scene_Zelda::resolveHeartCollision(Entity heart, Entity entity) {
     const Vec2 overlap = Physics::GetOverlap(heart, entity);
-    const Vec2 prevOverlap = Physics::GetPreviousOverlap(heart, entity);
 
     if (overlap.x >= 0.0f && overlap.y >= 0.0f) {
         entity.get<CHealth>().current = entity.get<CHealth>().max;
@@ -516,7 +521,6 @@ static void entitiesTable(const EntityVec& entityVec) {
 
 void Scene_Zelda::sGUI() {
     ImGui::Begin("Scene Properties");
-    ImGui::GetCurrentContext();
     const ImGuiContext& g = *ImGui::GetCurrentContext();
     const ImGuiIO& io = g.IO;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -568,6 +572,8 @@ void Scene_Zelda::sRender() {
         m_game->window().clear(sf::Color(205, 142, 72));
     else
         m_game->window().clear(sf::Color(255, 192, 122));
+
+    m_game->window().draw(m_map);
 
     sf::RectangleShape tick({1.0f, 6.0f});
     tick.setFillColor(sf::Color::Black);
@@ -696,15 +702,17 @@ void Scene_Zelda::sDoAction(const Action& action) {
             action.name() == "TOGGLE_COLLISION") { m_drawCollision = !m_drawCollision; } else if (
             action.name() == "TOGGLE_GRID") { m_drawGrid = !m_drawGrid; } else if (
             action.name() == "TOGGLE_FOLLOW") { m_follow = !m_follow; } else if (
-            action.name() == "PAUSE") { m_paused = !m_paused; } else if (action.name() == "QUIT") { onEnd(); } else if (
-            action.name() == "UP") { input.up = true; } else if (action.name() == "DOWN") { input.down = true; } else if
-        (action.name() == "LEFT") { input.left = true; } else if (action.name() == "RIGHT") { input.right = true; } else
-            if (action.name() == "ATTACK") { spawnSword(player()); spawnManyEntities(); }
+            action.name() == "PAUSE") { m_paused = !m_paused; } else if (
+            action.name() == "QUIT") { onEnd(); } else if (
+            action.name() == "UP") { input.up = true; } else if (
+            action.name() == "DOWN") { input.down = true; } else if (
+            action.name() == "LEFT") { input.left = true; } else if (
+            action.name() == "RIGHT") { input.right = true; } else if (
+            action.name() == "ATTACK") { spawnSword(player()); }
     } else if (action.type() == "END") {
         if (action.name() == "UP") { input.up = false; } else if (
             action.name() == "DOWN") { input.down = false; } else if (
-            action.name() == "LEFT") { input.left = false; } else if (action.name() == "RIGHT") {
-            input.right = false;
-        }
+            action.name() == "LEFT") { input.left = false; } else if (
+            action.name() == "RIGHT") { input.right = false; }
     }
 }

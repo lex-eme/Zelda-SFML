@@ -6,8 +6,6 @@
 #include "Vec2.h"
 
 class Animation {
-    static sf::Texture s_defaultTexture;
-
     sf::Sprite m_sprite;
     size_t m_frameCount = 1;
     size_t m_currentFrame = 0;
@@ -24,5 +22,6 @@ public:
     bool hasEnded() const;
     const std::string& getName() const;
     const Vec2& getSize() const;
+    const sf::Sprite& getSprite() const;
     sf::Sprite& getSprite();
 };
