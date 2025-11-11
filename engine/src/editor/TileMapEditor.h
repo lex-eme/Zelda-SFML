@@ -21,7 +21,7 @@ class TileMapEditor final : public Scene, public MapLoader {
     size_t m_tileCount = 0;
     SpriteSheet m_spriteSheet;
     sf::Sprite m_tilePreview;
-    std::array<Engine::Brush*, 2> m_brushes = {new Engine::Brush_Paint(this), new Engine::Brush_Rectangle(this)};
+    std::array<Engine::Brush*, 2> m_brushes = {new Engine::Brush_Paint(this, m_tilePreview), new Engine::Brush_Rectangle(this, m_tilePreview)};
     size_t m_brushIndex = 0;
     bool m_showGrid = true;
 
@@ -31,7 +31,6 @@ public:
 
     void placeTile(const sf::Vector2i& pos);
     float& mapTileSize() { return m_map.tileSize(); }
-    sf::Sprite& getPreviewSprite();
 
     void mapConfiguration(size_t width, size_t height) override;
     void mapTile(int x, int y, size_t vertexIndex, size_t tileIndex) override;

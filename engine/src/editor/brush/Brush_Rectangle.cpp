@@ -3,8 +3,8 @@
 #include "editor/TileMapEditor.h"
 
 namespace Engine {
-    Brush_Rectangle::Brush_Rectangle(TileMapEditor* editor)
-    : Brush(editor) {
+    Brush_Rectangle::Brush_Rectangle(TileMapEditor* editor, sf::Sprite& sprite)
+    : Brush(editor, sprite) {
     }
 
     void Brush_Rectangle::start(const sf::Vector2i pos) {
@@ -42,8 +42,8 @@ namespace Engine {
 
     void Brush_Rectangle::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         if (!m_started) {
-            m_editor->getPreviewSprite().setPosition({m_end.x * m_editor->mapTileSize(), m_end.y * m_editor->mapTileSize()});
-            target.draw(m_editor->getPreviewSprite());
+            m_preview.setPosition({m_end.x * m_editor->mapTileSize(), m_end.y * m_editor->mapTileSize()});
+            target.draw(m_preview);
             return;
         }
         const sf::Vector2i min = {std::min(m_start.x, m_end.x), std::min(m_start.y, m_end.y)};
@@ -52,8 +52,8 @@ namespace Engine {
         for (int row = min.x; row <= max.x; row += 1) {
             for (int col = min.y; col <= max.y; col += 1) {
                 const auto pos = sf::Vector2f(row, col) * m_editor->mapTileSize();
-                m_editor->getPreviewSprite().setPosition(pos);
-                target.draw(m_editor->getPreviewSprite());
+                m_preview.setPosition(pos);
+                target.draw(m_preview);
             }
         }
     }

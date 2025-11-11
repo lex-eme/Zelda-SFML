@@ -326,7 +326,3 @@ void TileMapEditor::mapConfiguration(const size_t width, const size_t height) {
 void TileMapEditor::mapTile(const int x, const int y, const size_t vertexIndex, const size_t tileIndex) {
     m_editorMapEntries[x + y * mapWidth()] = {true, vertexIndex, tileIndex};
 }
-
-sf::Sprite& TileMapEditor::getPreviewSprite() {
-    return m_tilePreview;
-}

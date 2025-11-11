@@ -4,8 +4,8 @@
 
 
 namespace Engine {
-    Brush_Paint::Brush_Paint(TileMapEditor* editor)
-        : Brush(editor) {
+    Brush_Paint::Brush_Paint(TileMapEditor* editor, sf::Sprite& sprite)
+        : Brush(editor, sprite) {
     }
 
     void Brush_Paint::start(const sf::Vector2i pos) {
@@ -21,7 +21,7 @@ namespace Engine {
     }
 
     void Brush_Paint::update(const sf::Vector2i pos) {
-        m_editor->getPreviewSprite().setPosition({pos.x * m_editor->mapTileSize(), pos.y * m_editor->mapTileSize()});
+        m_preview.setPosition({pos.x * m_editor->mapTileSize(), pos.y * m_editor->mapTileSize()});
     }
 
     void Brush_Paint::cancel() {
@@ -29,6 +29,6 @@ namespace Engine {
     }
 
     void Brush_Paint::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-        target.draw(m_editor->getPreviewSprite());
+        target.draw(m_preview);
     }
 } // Engine

@@ -7,8 +7,9 @@ namespace Engine {
     class Brush : public sf::Drawable {
     protected:
         TileMapEditor* m_editor;
+        sf::Sprite& m_preview;
 
-        explicit Brush(TileMapEditor* editor);
+        explicit Brush(TileMapEditor* editor, sf::Sprite& sprite);
 
     public:
         ~Brush() override = default;

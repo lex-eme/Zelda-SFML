@@ -6,7 +6,7 @@ namespace Engine {
         bool m_started = false;
 
     public:
-        explicit Brush_Paint(TileMapEditor* editor);
+        explicit Brush_Paint(TileMapEditor* editor, sf::Sprite& sprite);
 
         void start(sf::Vector2i pos) override;
         void end(sf::Vector2i pos) override;
