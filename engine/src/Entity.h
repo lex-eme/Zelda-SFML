@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Components.h"
 #include "EntityMemoryPool.h"
 
 class Entity {
